@@ -244,15 +244,13 @@ def import_model(model, options):
             material_face_offsets[0] += len(lod.faces)
 
             ''' Assign normals '''
-            face_offset = 0
-            polygons = mesh.polygons[face_offset:face_offset + len(lod.faces)]
-            for face_index, (face, polygon) in enumerate(zip(lod.faces, polygons)):
-                vertices = lod.get_face_vertices(face_index)
-                for vertex, loop_index in zip(vertices, polygon.loop_indices):
-                    # TODO: this might not actually set the normal properly
-                    n = Vector(vertex.normal)
-                    mesh.loops[loop_index].normal = n
-            face_offset += len(lod.faces)
+            normals = []
+            for polygon in mesh.polygons:
+                for loop_index in polygon.loop_indices:
+                    vertex_index = mesh.loops[loop_index].vertex_index
+                    normal = Vector(lod.vertices[vertex_index].normal)
+                    normals.append(normal)
+            mesh.normals_split_custom_set(normals)
 
             mesh.validate(clean_customdata=False)
             mesh.update(calc_edges=False)
