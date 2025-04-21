@@ -1,17 +1,3 @@
-bl_info = {
-    'name': 'Lithtech Tools',
-    'description': 'Import and export various Lithtech models and animations files.',
-    'author': 'Colin Basnett and HeyJake',
-    'version': (1, 1, 0),
-    'blender': (2, 80, 0),
-    'location': 'File > Import-Export',
-    'warning': 'This add-on is under development.',
-    'wiki_url': 'https://github.com/haekb/io_scene_lithtech/wiki',
-    'tracker_url': 'https://github.com/haekb/io_scene_lithtech/issues',
-    'support': 'COMMUNITY',
-    'category': 'Import-Export'
-}
-
 if 'bpy' in locals():
     import importlib
     if 'hash_ps2'           in locals(): importlib.reload(hash_ps2)

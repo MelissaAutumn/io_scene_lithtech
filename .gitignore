@@ -2,3 +2,7 @@ __pycache__
 
 # Big test files used in research, not really needed.
 research/test files/*
+
+*.egg-info
+.venv
+.idea

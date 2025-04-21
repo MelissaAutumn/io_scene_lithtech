@@ -1,0 +1,18 @@
+[project]
+name = "io_scene_lithtech"
+version = "0.2.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fake-bpy-module>=20250409",
+    "pillow>=11.2.1",
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["io_scene_lithtech"]  # package names should match these glob patterns (["*"] by default)

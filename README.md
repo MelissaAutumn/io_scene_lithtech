@@ -12,15 +12,26 @@ To download the respository, click the green `Code -> Download ZIP` at the top o
 
 ...or grab a release zip if one is there!
 
+## Development
+
+To install for development all you need to do is create a local repository pointing to the plugin's src folder.
+
+* Edit -> Preferences
+* Within preferences select the Get Extensions tab
+* Click on the Repositories select box on the top right of the Get Extensions panel
+* Click + and select local repository
+* Name the repository `io_scene_lithtech (dev)`, tick custom directory and select this project's `src` directory
+* Enable the extension in the Add-ons tab
+
 ## Supported Formats
 
-Format | Import | Export
---- | --- | ---
-ABCv6 | Full | Full
-ABCv13 | Rigid and Skeletal | Limited
-LTA | No | Rigid and Skeletal
-LTB (PS2) | Rigid and Skeletal | No
-LTB (PC) | Rigid and Skeletal | No
+| Format    | Import             | Export             |
+|-----------|--------------------|--------------------|
+| ABCv6     | Full               | Full               |
+| ABCv13    | Rigid and Skeletal | Limited            |
+| LTA       | No                 | Rigid and Skeletal |
+| LTB (PS2) | Rigid and Skeletal | No                 |
+| LTB (PC)  | Rigid and Skeletal | No                 |
 
 The ABC file format description can be found on our wiki [here](https://github.com/cmbasnett/io_scene_abc/wiki/ABC).
 
