@@ -204,7 +204,7 @@ class Arch02(object):
 
                         while current_size < file.compressed_size:
                             size_compressed = bunpack('I', archive_fp)[0]
-                            size_uncompressed = bunpack('I', archive_fp)[0]
+                            _size_uncompressed = bunpack('I', archive_fp)[0]
 
                             data = archive_fp.read(size_compressed)
                             try:
@@ -218,7 +218,8 @@ class Arch02(object):
 
                             # Fix offset
                             offset = archive_fp.tell() % 4
-                            if offset: archive_fp.read(4 - offset)
+                            if offset:
+                                archive_fp.read(4 - offset)
 
                             current_size += size_compressed + 8 + (4 - offset)
                             chunks += 1

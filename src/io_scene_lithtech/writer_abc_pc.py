@@ -48,7 +48,7 @@ class ABCModelWriter(object):
         sections = []
 
         ''' Header '''
-        lod_count = 1  # TODO: incorporate LODs in a later version
+        _lod_count = 1  # TODO: incorporate LODs in a later version
         lod_distances = []
 
         unique_strings = self._get_unique_strings(model)

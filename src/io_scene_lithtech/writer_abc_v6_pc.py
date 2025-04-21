@@ -1,6 +1,5 @@
 import struct
-import itertools
-from mathutils import Vector, Matrix, Quaternion
+from mathutils import Vector
 
 class ABCV6ModelWriter(object):
     @staticmethod
@@ -61,11 +60,11 @@ class ABCV6ModelWriter(object):
         sections = []
 
         ''' Header '''
-        unique_strings = self._get_unique_strings(model)
+        _unique_strings = self._get_unique_strings(model)
 
         buffer = bytearray()
         buffer.extend(self._string_to_bytes("MonolithExport Model File v6")) # version
-        buffer.extend(self._string_to_bytes(model.command_string));
+        buffer.extend(self._string_to_bytes(model.command_string))
 
         sections.append(Section('Header', bytes(buffer)))
 
@@ -115,7 +114,7 @@ class ABCV6ModelWriter(object):
                 buffer.extend(struct.pack('H', md_vert))
             buffer.extend(struct.pack('I', node.child_count))
 
-        sections.append(Section('Nodes', bytes(buffer)));
+        sections.append(Section('Nodes', bytes(buffer)))
 
         ''' Animation '''
         buffer = bytearray()

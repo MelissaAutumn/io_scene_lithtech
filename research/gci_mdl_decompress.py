@@ -1,4 +1,4 @@
-import zlib, sys
+import zlib
 
 #
 # Gotham City Imposters (and probably others) model file seems to be zlib compressed.

@@ -3,11 +3,11 @@ import bpy_extras
 import bmesh
 import os
 import math
-from math import pi, ceil
-from mathutils import Vector, Matrix, Quaternion, Euler
+from math import ceil
+from mathutils import Vector, Matrix
 from bpy.props import StringProperty, BoolProperty, FloatProperty
 from .dtx import DTX
-from .utils import show_message_box, get_framerate
+from .utils import get_framerate
 
 # Format imports
 from .reader_abc_v6_pc import ABCV6ModelReader
@@ -19,18 +19,20 @@ from . import utils
 
 
 class ModelImportOptions(object):
-    def __init__(self):
-        self.should_merge_duplicate_verts = False
-        self.should_import_animations = False
-        self.should_import_sockets = False
-        self.bone_length_min = 0.1
-        self.should_import_lods = False
-        self.should_merge_pieces = False
-        self.images = []
+    should_merge_duplicate_verts = False
+    should_import_animations = False
+    should_import_sockets = False
+    should_import_lods = False
+    should_merge_pieces = False
+    should_clear_scene = False
+
+    bone_length_min = 0.1
+    image = None
 
 
-def import_model(model, options):
-    # utils.delete_all_objects()
+def import_model(model, options: ModelImportOptions):
+    if options.should_clear_scene:
+        utils.clear_scene()
 
     # This seems to be the rage these days
     Context = bpy.context
@@ -56,7 +58,7 @@ def import_model(model, options):
 
     collection.objects.link(armature_object)
     armature_object.select_set(True)
-    #armature_object.edit_bones()
+    # armature_object.edit_bones()
 
     Context.view_layer.objects.active = armature_object
     Ops.object.mode_set(mode='EDIT')
@@ -141,11 +143,10 @@ def import_model(model, options):
 
             # Note: Texture image names are stored in ModelButes.txt
             if options.image is not None:
-                texture.image = bpy.data.images.new(piece.name, width=options.image.width, height=options.image.height, alpha=True) # TODO: get real name
+                texture.image = bpy.data.images.new(piece.name, width=options.image.width, height=options.image.height, alpha=True)  # TODO: get real name
                 texture.image.pixels[:] = options.image.pixels[:]
 
             texImage.image = texture.image
-
 
     ''' Create a mesh for each piece of each LOD level that we are importing. '''
     for lod_index in range(lod_import_count):
@@ -310,11 +311,11 @@ def import_model(model, options):
         md_actions = []
 
         index = 0
-        processed_frame_count = 1 # 1 for neutral_pose
+        processed_frame_count = 1  # 1 for neutral_pose
         for animation in model.animations:
             print("Processing", animation.name)
 
-            index  = index + 1
+            index = index + 1
             # Create a new action with the animation name
             action = bpy.data.actions.new(name=animation.name)
 
@@ -445,6 +446,7 @@ class ImportOperatorABC(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     bl_region_type = 'WINDOW'
 
     # ImportHelper mixin class uses this
+    filepath = ""
     filename_ext = ".abc"
 
     filter_glob: StringProperty(
@@ -535,7 +537,7 @@ class ImportOperatorABC(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         # Load the model
         try:
             model = ABCModelReader().from_file(self.filepath)
-        except Exception as e:
+        except Exception:
             model = ABCV6ModelReader().from_file(self.filepath)
 
         model.name = os.path.splitext(os.path.basename(self.filepath))[0]
@@ -664,15 +666,8 @@ class ImportOperatorLTB(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         # Load the model
         try:
             model = PCLTBModelReader().from_file(self.filepath)
-        except Exception as e:
+        except Exception:
             model = PS2LTBModelReader().from_file(self.filepath)
-
-        # Load the model
-        #try:
-        #model = PS2LTBModelReader().from_file(self.filepath)
-        #except Exception as e:
-        #    show_message_box(str(e), "Read Error", 'ERROR')
-        #    return {'CANCELLED'}
 
         model.name = os.path.splitext(os.path.basename(self.filepath))[0]
         image = None
@@ -694,11 +689,6 @@ class ImportOperatorLTB(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         options.should_clear_scene = self.should_clear_scene
         options.should_merge_duplicate_verts = self.should_merge_duplicate_verts
         options.image = image
-        #try:
-        #    import_model(model, options)
-        #except Exception as e:
-        #    show_message_box(str(e), "Import Error", 'ERROR')
-        #    return {'CANCELLED'}
         import_model(model, options)
 
         return {'FINISHED'}

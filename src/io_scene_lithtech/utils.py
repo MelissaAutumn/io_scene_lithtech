@@ -98,3 +98,9 @@ def make_suzanne():
     armature.select = True
     bpy.context.scene.objects.active = armature
     bpy.ops.object.parent_set(type='ARMATURE_AUTO')
+
+
+def clear_scene():
+    scene = bpy.context.scene
+    for c in scene.collection.children:
+        scene.collection.children.unlink(c)

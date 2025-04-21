@@ -1,5 +1,3 @@
-import struct
-import itertools
 from mathutils import Vector, Quaternion, Matrix
 from .utils import LTAVersion
 

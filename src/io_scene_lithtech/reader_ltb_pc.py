@@ -1,5 +1,5 @@
 import os
-from .abc import *
+from . import abc
 from .io import unpack
 from mathutils import Vector, Matrix, Quaternion
 
@@ -53,14 +53,14 @@ class PCLTBModelReader(object):
         return f.read(unpack('H', f)[0]).decode('ascii')
 
     def _read_weight(self, f):
-        weight = Weight()
+        weight = abc.Weight()
         weight.node_index = unpack('I', f)[0]
         weight.location = self._read_vector(f)
         weight.bias = unpack('f', f)[0]
         return weight
 
     def _read_vertex(self, f):
-        vertex = Vertex()
+        vertex = abc.Vertex()
         weight_count = unpack('H', f)[0]
         vertex.sublod_vertex_index = unpack('H', f)[0]
         vertex.weights = [self._read_weight(f) for _ in range(weight_count)]
@@ -69,13 +69,13 @@ class PCLTBModelReader(object):
         return vertex
 
     def _read_face_vertex(self, f):
-        face_vertex = FaceVertex()
+        face_vertex = abc.FaceVertex()
         face_vertex.texcoord.xy = unpack('2f', f)
         face_vertex.vertex_index = unpack('H', f)[0]
         return face_vertex
 
     def _read_face(self, f):
-        face = Face()
+        face = abc.Face()
         face.vertices = [self._read_face_vertex(f) for _ in range(3)]
         return face
 
@@ -93,8 +93,8 @@ class PCLTBModelReader(object):
 
         for mask in data_type:
             for _ in range(lod.vert_count):
-                vertex = Vertex()
-                face_vertex = FaceVertex()
+                vertex = abc.Vertex()
+                face_vertex = abc.FaceVertex()
 
                 # Dirty flags
                 is_vertex_used = False
@@ -104,7 +104,7 @@ class PCLTBModelReader(object):
                     vertex.location = self._read_vector(f)
                     
                     # One bone per vertex
-                    weight = Weight()
+                    weight = abc.Weight()
                     weight.node_index = bone
                     weight.bias = 1.0
 
@@ -149,7 +149,7 @@ class PCLTBModelReader(object):
         assert(lod.vert_count == len(lod.vertices))
 
         # We need a "global" face, we'll fill it and re-use it.
-        face = Face()
+        face = abc.Face()
         for _ in range(lod.face_count * 3):
             vertex_index = unpack('H', f)[0]
 
@@ -165,7 +165,7 @@ class PCLTBModelReader(object):
             if len(face.vertices) >= 3:
                 lod.faces.append(face)
                 # Make a new face, and append our face vertex
-                face = Face()
+                face = abc.Face()
             # End If
         # End For
 
@@ -176,7 +176,7 @@ class PCLTBModelReader(object):
         return lod
 
     def _read_skeletal_mesh(self, lod, f):
-        reindexed_bone = unpack('B', f)[0]
+        _reindexed_bone = unpack('B', f)[0]
         data_type = unpack('4I', f)
 
         matrix_palette = unpack('B', f)[0]
@@ -188,8 +188,8 @@ class PCLTBModelReader(object):
 
         for mask in data_type:
             for _ in range(lod.vert_count):
-                vertex = Vertex()
-                face_vertex = FaceVertex()
+                vertex = abc.Vertex()
+                face_vertex = abc.FaceVertex()
 
                 # Dirty flags
                 is_vertex_used = False
@@ -201,7 +201,7 @@ class PCLTBModelReader(object):
 
                     weights = []
 
-                    weight = Weight()
+                    weight = abc.Weight()
                     weight.bias = 1.0                    
 
                     for i in range(lod.max_bones_per_face):
@@ -216,7 +216,7 @@ class PCLTBModelReader(object):
                             blend = unpack('f', f)[0]
                             weight.bias -= blend
 
-                            blend_weight = Weight()
+                            blend_weight = abc.Weight()
                             blend_weight.bias = blend
                             weights.append(blend_weight)
                         # End If
@@ -263,7 +263,7 @@ class PCLTBModelReader(object):
         assert(lod.vert_count == len(lod.vertices))
 
         # We need a "global" face, we'll fill it and re-use it.
-        face = Face()
+        face = abc.Face()
         for _ in range(lod.face_count * 3):
             vertex_index = unpack('H', f)[0]
 
@@ -279,7 +279,7 @@ class PCLTBModelReader(object):
             if len(face.vertices) >= 3:
                 lod.faces.append(face)
                 # Make a new face, and append our face vertex
-                face = Face()
+                face = abc.Face()
             # End If
         # End For
 
@@ -296,7 +296,7 @@ class PCLTBModelReader(object):
             bone_list = unpack('4B', f)
 
             # ???
-            index_buffer_index = unpack('I', f)[0]
+            _index_buffer_index = unpack('I', f)[0]
 
             # Okay, now we can fill up our node indexes!
             for vertex_index in range(index_start, index_start + index_count):
@@ -329,7 +329,7 @@ class PCLTBModelReader(object):
         return lod
 
     def _read_lod(self, f):
-        lod = LOD()
+        lod = abc.LOD()
 
         lod.texture_count = unpack('I', f)[0]
         lod.textures = unpack('4I', f)
@@ -344,7 +344,7 @@ class PCLTBModelReader(object):
             lod = self._read_null_mesh(lod, f)
         else:
             # Some common data
-            obj_size = unpack('I', f)[0]
+            _obj_size = unpack('I', f)[0]
             lod.vert_count = unpack('I', f)[0]
             lod.face_count = unpack('I', f)[0]
             lod.max_bones_per_face = unpack('I', f)[0]
@@ -356,12 +356,12 @@ class PCLTBModelReader(object):
                 lod = self._read_skeletal_mesh(lod, f)
 
         nodes_used_count = unpack('B', f)[0]
-        nodes_used = [unpack('B', f)[0] for _ in range(nodes_used_count)]
+        _nodes_used = [unpack('B', f)[0] for _ in range(nodes_used_count)]
 
         return lod
 
     def _read_piece(self, f):
-        piece = Piece()
+        piece = abc.Piece()
 
         piece.name = self._read_string(f)
         lod_count = unpack('I', f)[0]
@@ -377,7 +377,7 @@ class PCLTBModelReader(object):
         return piece
 
     def _read_node(self, f):
-        node = Node()
+        node = abc.Node()
         node.name = self._read_string(f)
         node.index = unpack('H', f)[0]
         node.flags = unpack('b', f)[0]
@@ -387,7 +387,7 @@ class PCLTBModelReader(object):
         return node
 
     def _read_uncompressed_transform(self, keyframe_count, f):
-        node_transforms = [Animation.Keyframe.Transform() for _ in range(keyframe_count)]
+        node_transforms = [abc.Animation.Keyframe.Transform() for _ in range(keyframe_count)]
 
         for t in node_transforms:
             t.location = self._read_vector(f)
@@ -434,7 +434,7 @@ class PCLTBModelReader(object):
             # RLE animations, if it doesn't change in any additional keyframe,
             # then it we can just use the last known pos/rot!
             for i in range(keyframe_count):
-                transform = Animation.Keyframe.Transform()
+                transform = abc.Animation.Keyframe.Transform()
 
                 try:
                     transform.location = compressed_positions[i]
@@ -458,18 +458,18 @@ class PCLTBModelReader(object):
         return node_transforms
 
     def _read_child_model(self, f):
-        child_model = ChildModel()
+        child_model = abc.ChildModel()
         child_model.name = self._read_string(f)
         return child_model
 
     def _read_keyframe(self, f):
-        keyframe = Animation.Keyframe()
+        keyframe = abc.Animation.Keyframe()
         keyframe.time = unpack('I', f)[0]
         keyframe.string = self._read_string(f)
         return keyframe
 
     def _read_animation(self, f):
-        animation = Animation()
+        animation = abc.Animation()
         animation.extents = self._read_vector(f)
         animation.name = self._read_string(f)
         animation.compression_type = unpack('i', f)[0]
@@ -494,7 +494,7 @@ class PCLTBModelReader(object):
         return animation
 
     def _read_socket(self, f):
-        socket = Socket()
+        socket = abc.Socket()
         socket.node_index = unpack('I', f)[0]
         socket.name = self._read_string(f)
         socket.rotation = self._read_quaternion(f)
@@ -503,21 +503,21 @@ class PCLTBModelReader(object):
         return socket
 
     def _read_anim_binding(self, f):
-        anim_binding = AnimBinding()
+        anim_binding = abc.AnimBinding()
         anim_binding.name = self._read_string(f)
         anim_binding.extents = self._read_vector(f)
         anim_binding.origin = self._read_vector(f)
         return anim_binding
 
     def _read_weight_set(self, f):
-        weight_set = WeightSet()
+        weight_set = abc.WeightSet()
         weight_set.name = self._read_string(f)
         node_count = unpack('I', f)[0]
         weight_set.node_weights = [unpack('f', f)[0] for _ in range(node_count)]
         return weight_set
 
     def from_file(self, path):
-        model = Model()
+        model = abc.Model()
         model.name = os.path.splitext(os.path.basename(path))[0]
         with open(path, 'rb') as f:
 
@@ -527,11 +527,11 @@ class PCLTBModelReader(object):
             file_type = unpack('H', f)[0]
             file_version = unpack('H', f)[0]
 
-            if file_type is not 1:
+            if file_type != 1:
                 raise Exception('Unsupported File Type! Only mesh LTB files are supported.')
             # End If
 
-            if file_version is not 9:
+            if file_version != 9:
                 raise Exception('Unsupported File Version! Importer currently only supports v9.')
             # End If
 
@@ -546,21 +546,21 @@ class PCLTBModelReader(object):
 
             model.version = self.version
 
-            keyframe_count = unpack('i', f)[0]
-            animation_count = unpack('i', f)[0]
+            _keyframe_count = unpack('i', f)[0]
+            _animation_count = unpack('i', f)[0]
             self.node_count = unpack('i', f)[0]
-            piece_count = unpack('i', f)[0]
-            child_model_count = unpack('i', f)[0]
-            face_count = unpack('i', f)[0]
-            vertex_count = unpack('i', f)[0]
-            vertex_weight_count = unpack('i', f)[0]
-            lod_count = unpack('i', f)[0]
-            socket_count = unpack('i', f)[0]
-            weight_set_count = unpack('i', f)[0]
-            string_count = unpack('i', f)[0]
-            string_length = unpack('i', f)[0]
-            vertex_animation_data_size = unpack('i', f)[0]
-            animation_data_size = unpack('i', f)[0]
+            _piece_count = unpack('i', f)[0]
+            _child_model_count = unpack('i', f)[0]
+            _face_count = unpack('i', f)[0]
+            _vertex_count = unpack('i', f)[0]
+            _vertex_weight_count = unpack('i', f)[0]
+            _lod_count = unpack('i', f)[0]
+            _socket_count = unpack('i', f)[0]
+            _weight_set_count = unpack('i', f)[0]
+            _string_count = unpack('i', f)[0]
+            _string_length = unpack('i', f)[0]
+            _vertex_animation_data_size = unpack('i', f)[0]
+            _animation_data_size = unpack('i', f)[0]
 
             model.command_string = self._read_string(f)
 
@@ -592,7 +592,7 @@ class PCLTBModelReader(object):
             # Nodes
             #
             model.nodes = [self._read_node(f) for _ in range(self.node_count)]
-            build_undirected_tree(model.nodes)
+            abc.build_undirected_tree(model.nodes)
             weight_set_count = unpack('I', f)[0]
             model.weight_sets = [self._read_weight_set(f) for _ in range(weight_set_count)]
 

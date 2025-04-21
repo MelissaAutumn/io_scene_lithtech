@@ -4,15 +4,9 @@ This mainly a total hack, and probably will be removed once animations and expor
 '''
 import bpy
 import bpy_extras
-import bmesh
 import os
-import math
-from math import pi
-from mathutils import Vector, Matrix, Quaternion, Euler
-from bpy.props import StringProperty, BoolProperty, FloatProperty
-from .dtx import DTX
-from .utils import show_message_box
-from .abc import *
+from bpy.props import StringProperty
+from . import abc
 
 from .reader_ltb_ps2 import PS2LTBModelReader
 from .reader_ltb_pc import PCLTBModelReader
@@ -111,7 +105,7 @@ class ModelStubber(object):
         model.nodes[0].is_removable = True
 
         # First node seems to be off...
-        model.nodes[0].bind_matrix = Matrix()
+        model.nodes[0].bind_matrix = abc.Matrix()
 
         model.nodes[0].bind_matrix[0][0] = -1.0
         model.nodes[0].bind_matrix[0][1] = 0.0
@@ -143,32 +137,32 @@ class ModelStubber(object):
         This function will just create fake parts of the model
         Because LithTech needs at least something in every section!
         '''
-        animation = Animation()
+        animation = abc.Animation()
         animation.name = 'ConvertedFromPS2'
-        animation.extents = Vector((0, 0, 0))
-        animation.keyframes.append(Animation.Keyframe())
+        animation.extents = abc.Vector((0, 0, 0))
+        animation.keyframes.append(abc.Animation.Keyframe())
         for node_index, (node) in enumerate(model.nodes):
             transforms = list()
             for _ in animation.keyframes:
-                transform = Animation.Keyframe.Transform()
+                transform = abc.Animation.Keyframe.Transform()
                 transform.matrix = node.bind_matrix
                 transforms.append(transform)
             animation.node_keyframe_transforms.append(transforms)
         model.animations.append(animation)
 
         ''' ChildModels '''
-        child_model = ChildModel()
+        child_model = abc.ChildModel()
 
         for _ in model.nodes:
             # This number seems to have no basis on reality, so therefore it's now a teapot.
             child_model.build_number = 418
-            child_model.transforms.append(Animation.Keyframe.Transform())
+            child_model.transforms.append(abc.Animation.Keyframe.Transform())
         model.child_models.append(child_model)
 
         ''' AnimBindings '''
-        anim_binding = AnimBinding()
+        anim_binding = abc.AnimBinding()
         anim_binding.name = 'ConvertedFromPS2'
-        anim_binding.origin = Vector((0, 0, 0))
+        anim_binding.origin = abc.Vector((0, 0, 0))
         model.anim_bindings.append(anim_binding)
 
         # Save me some time renaming stuff..

@@ -1,5 +1,5 @@
 import os
-from .abc import *
+from . import abc
 from .io import unpack
 from mathutils import Vector, Matrix, Quaternion
 
@@ -26,14 +26,14 @@ class ABCModelReader(object):
         return f.read(unpack('H', f)[0]).decode('ascii')
 
     def _read_weight(self, f):
-        weight = Weight()
+        weight = abc.Weight()
         weight.node_index = unpack('I', f)[0]
         weight.location = self._read_vector(f)
         weight.bias = unpack('f', f)[0]
         return weight
 
     def _read_vertex(self, f):
-        vertex = Vertex()
+        vertex = abc.Vertex()
         weight_count = unpack('H', f)[0]
         vertex.sublod_vertex_index = unpack('H', f)[0]
         vertex.weights = [self._read_weight(f) for _ in range(weight_count)]
@@ -42,18 +42,18 @@ class ABCModelReader(object):
         return vertex
 
     def _read_face_vertex(self, f):
-        face_vertex = FaceVertex()
+        face_vertex = abc.FaceVertex()
         face_vertex.texcoord.xy = unpack('2f', f)
         face_vertex.vertex_index = unpack('H', f)[0]
         return face_vertex
 
     def _read_face(self, f):
-        face = Face()
+        face = abc.Face()
         face.vertices = [self._read_face_vertex(f) for _ in range(3)]
         return face
 
     def _read_lod(self, f):
-        lod = LOD()
+        lod = abc.LOD()
         face_count = unpack('I', f)[0]
         lod.faces = [self._read_face(f) for _ in range(face_count)]
         vertex_count = unpack('I', f)[0]
@@ -61,7 +61,7 @@ class ABCModelReader(object):
         return lod
 
     def _read_piece(self, f):
-        piece = Piece()
+        piece = abc.Piece()
         piece.material_index = unpack('H', f)[0]
         piece.specular_power = unpack('f', f)[0]
         piece.specular_scale = unpack('f', f)[0]
@@ -73,7 +73,7 @@ class ABCModelReader(object):
         return piece
 
     def _read_node(self, f):
-        node = Node()
+        node = abc.Node()
         node.name = self._read_string(f)
         node.index = unpack('H', f)[0]
         node.flags = unpack('b', f)[0]
@@ -83,7 +83,7 @@ class ABCModelReader(object):
         return node
 
     def _read_transform(self, f):
-        transform = Animation.Keyframe.Transform()
+        transform = abc.Animation.Keyframe.Transform()
         transform.location = self._read_vector(f)
         transform.rotation = self._read_quaternion(f)
 
@@ -94,20 +94,20 @@ class ABCModelReader(object):
         return transform
 
     def _read_child_model(self, f):
-        child_model = ChildModel()
+        child_model = abc.ChildModel()
         child_model.name = self._read_string(f)
         child_model.build_number = unpack('I', f)[0]
         child_model.transforms = [self._read_transform(f) for _ in range(self._node_count)]
         return child_model
 
     def _read_keyframe(self, f):
-        keyframe = Animation.Keyframe()
+        keyframe = abc.Animation.Keyframe()
         keyframe.time = unpack('I', f)[0]
         keyframe.string = self._read_string(f)
         return keyframe
 
     def _read_animation(self, f):
-        animation = Animation()
+        animation = abc.Animation()
         animation.extents = self._read_vector(f)
         animation.name = self._read_string(f)
         animation.unknown1 = unpack('i', f)[0]
@@ -126,7 +126,7 @@ class ABCModelReader(object):
         return animation
 
     def _read_socket(self, f):
-        socket = Socket()
+        socket = abc.Socket()
         socket.node_index = unpack('I', f)[0]
         socket.name = self._read_string(f)
         socket.rotation = self._read_quaternion(f)
@@ -134,21 +134,21 @@ class ABCModelReader(object):
         return socket
 
     def _read_anim_binding(self, f):
-        anim_binding = AnimBinding()
+        anim_binding = abc.AnimBinding()
         anim_binding.name = self._read_string(f)
         anim_binding.extents = self._read_vector(f)
         anim_binding.origin = self._read_vector(f)
         return anim_binding
 
     def _read_weight_set(self, f):
-        weight_set = WeightSet()
+        weight_set = abc.WeightSet()
         weight_set.name = self._read_string(f)
         node_count = unpack('I', f)[0]
         weight_set.node_weights = [unpack('f', f)[0] for _ in range(node_count)]
         return weight_set
 
     def from_file(self, path):
-        model = Model()
+        model = abc.Model()
         model.name = os.path.splitext(os.path.basename(path))[0]
         with open(path, 'rb') as f:
             next_section_offset = 0
@@ -182,7 +182,7 @@ class ABCModelReader(object):
                     model.pieces = [self._read_piece(f) for _ in range(pieces_count)]
                 elif section_name == 'Nodes':
                     model.nodes = [self._read_node(f) for _ in range(self._node_count)]
-                    build_undirected_tree(model.nodes)
+                    abc.build_undirected_tree(model.nodes)
                     weight_set_count = unpack('I', f)[0]
                     model.weight_sets = [self._read_weight_set(f) for _ in range(weight_set_count)]
                 elif section_name == 'ChildModels':

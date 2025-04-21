@@ -1,6 +1,6 @@
-from .abc import *
-from math import pi, radians, floor
-from mathutils import Vector, Matrix, Quaternion, Euler
+from . import abc
+from math import radians, floor
+from mathutils import Vector, Matrix
 from .utils import get_framerate
 from re import match
 import bpy
@@ -40,7 +40,7 @@ class ModelBuilder(object):
         if not mesh_objects:
             raise Exception('{} has no children of type \'MESH\'.'.format(armature_object.name))
 
-        model = Model()
+        model = abc.Model()
         model.internal_radius = int(max(armature_object.dimensions))
 
         ''' Pieces '''
@@ -70,11 +70,11 @@ class ModelBuilder(object):
                 except KeyError:
                     vertex_group_nodes[vertex_group] = None
 
-            piece = Piece()
+            piece = abc.Piece()
             piece.name = mesh_object.name
 
             # TODO: multiple LODs
-            lod = LOD()
+            lod = abc.LOD()
 
             bone_indices = dict()
             for i, bone in enumerate(armature.bones):
@@ -94,7 +94,7 @@ class ModelBuilder(object):
 
                         location = (vertex.co @ mesh_object.matrix_world) @ bone_matrix.transposed().inverted()
                         if bias != 0.0 and bone is not None:
-                            weight = Weight()
+                            weight = abc.Weight()
                             weight.node_index = bone_indices[bone]
                             weight.bias = bias
                             weight.location = location
@@ -106,7 +106,7 @@ class ModelBuilder(object):
                 # Note: This corrects any rotation done on import
                 rot = Matrix.Rotation(radians(-180), 4, 'Z') @ Matrix.Rotation(radians(90), 4, 'X')
 
-                v = Vertex()
+                v = abc.Vertex()
                 v.location = vertex.co @ rot
                 v.normal = vertex.normal
                 v.weights.extend(weights)
@@ -118,13 +118,13 @@ class ModelBuilder(object):
                 if len(polygon.loop_indices) > 3:
                     raise Exception('Mesh \'{}\' is not triangulated.'.format(
                         mesh.name))  # TODO: automatically triangulate the mesh, and have this be reversible
-                face = Face()
+                face = abc.Face()
                 face.normal = polygon.normal
 
                 for loop_index in polygon.loop_indices:
                     uv = mesh.uv_layers.active.data[loop_index].uv.copy()  # TODO: use "active"?
                     uv.y = 1.0 - uv.y
-                    face_vertex = FaceVertex()
+                    face_vertex = abc.FaceVertex()
                     face_vertex.texcoord.x = uv.x
                     face_vertex.texcoord.y = uv.y
                     face_vertex.vertex_index = mesh.loops[loop_index].vertex_index
@@ -145,7 +145,7 @@ class ModelBuilder(object):
 
         ''' Nodes '''
         for bone_index, bone in enumerate(armature.bones):
-            node = Node()
+            node = abc.Node()
             node.name = bone.name
             node.index = bone_index
             node.flags = 0
@@ -169,7 +169,7 @@ class ModelBuilder(object):
             node.child_count = len(bone.children)
             model.nodes.append(node)
 
-        build_undirected_tree(model.nodes)
+        abc.build_undirected_tree(model.nodes)
 
         ''' Sockets '''
         for obj in bpy.data.objects:
@@ -181,7 +181,7 @@ class ModelBuilder(object):
                         node_index = node.index
                         break
 
-                socket = Socket()
+                socket = abc.Socket()
                 socket.name = obj.name[2:]
                 socket.node_index = node_index
                 socket.location = obj.location
@@ -189,10 +189,10 @@ class ModelBuilder(object):
                 model.sockets.append(socket)
 
         ''' ChildModels '''
-        child_model = ChildModel()
+        child_model = abc.ChildModel()
 
         for _ in model.nodes:
-            child_model.transforms.append(Animation.Keyframe.Transform())
+            child_model.transforms.append(abc.Animation.Keyframe.Transform())
         model.child_models.append(child_model)
 
         ''' Animations '''
@@ -202,7 +202,7 @@ class ModelBuilder(object):
                 continue
 
             print("Processing animation %s" % action.name)
-            animation = Animation()
+            animation = abc.Animation()
             animation.name = action.name
 
             armature_object.animation_data.action = action
@@ -262,7 +262,7 @@ class ModelBuilder(object):
                 subframe_time = time - floor(time)
                 bpy.context.scene.frame_set(time, subframe = subframe_time)
 
-                keyframe = Animation.Keyframe()
+                keyframe = abc.Animation.Keyframe()
                 keyframe.time = scaled_time
 
                 # will using mesh_object here break if there's multiple mesh objects using the same armature as a parent? DON'T DO THAT
@@ -299,12 +299,12 @@ class ModelBuilder(object):
                     subframe_time = time - floor(time)
                     bpy.context.scene.frame_set(time, subframe = subframe_time)
 
-                    transform = Animation.Keyframe.Transform()
+                    transform = abc.Animation.Keyframe.Transform()
 
                     matrix = pose_bone.matrix
 
                     # Apply the inverse parent bone matrix to get relative positioning
-                    if pose_bone.parent != None:
+                    if pose_bone.parent is not None:
                         matrix = pose_bone.parent.matrix.inverted() @ matrix
                     # End If
 
@@ -429,7 +429,7 @@ class ModelBuilder(object):
                 node.flags |= 4
 
         ''' AnimBindings '''
-        anim_binding = AnimBinding()
+        anim_binding = abc.AnimBinding()
         anim_binding.name = 'base'
         anim_binding.extents = Vector((10, 10, 10))
         model.anim_bindings.append(anim_binding)

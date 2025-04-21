@@ -16,7 +16,7 @@ if not args.img_file:
 
 def convert(dtx_file: str, img_file: str):
     print(f'Reading {dtx_file}')
-    print(f'Decoding DTX...')
+    print('Decoding DTX...')
     dtx_obj = DTX(dtx_file)
     img_obj: Image = Image.frombytes('RGBA', (dtx_obj.width, dtx_obj.height), dtx_obj.pixels)
     img_obj.save(img_file, 'png')

@@ -1,8 +1,9 @@
 import os
-from .abc import *
+import struct
+
+from . import abc
 from .io import unpack
 from mathutils import Vector, Matrix, Quaternion
-from functools import cmp_to_key
 import math
 import copy
 from .hash_ps2 import HashLookUp
@@ -71,13 +72,13 @@ class LocalVertex(object):
     def __init__(self):
         self.id = 0
         self.merge_string = ""
-        self.vertex = Vertex()
+        self.vertex = abc.Vertex()
         self.associated_ids = []
         
 class LocalFace(object):
     def __init__(self):
         self.group_id = 0
-        self.face_vertex = FaceVertex()
+        self.face_vertex = abc.FaceVertex()
 
 # End Class
 
@@ -169,7 +170,7 @@ class VertexList(object):
                 if i < 2:
                     continue
 
-                face = Face()
+                face = abc.Face()
 
                 if grouped_faces[i].face_vertex.reversed:
                     if flip:
@@ -251,14 +252,14 @@ class PS2LTBModelReader(object):
         return f.read(unpack('H', f)[0]).decode('ascii')
 
     def _read_weight(self, f):
-        weight = Weight()
+        weight = abc.Weight()
         weight.node_index = unpack('I', f)[0]
         weight.location = self._read_vector(f)
         weight.bias = unpack('f', f)[0]
         return weight
 
     def _read_vertex(self, f):
-        vertex = Vertex()
+        vertex = abc.Vertex()
         weight_count = unpack('H', f)[0]
         vertex.sublod_vertex_index = unpack('H', f)[0]
         vertex.weights = [self._read_weight(f) for _ in range(weight_count)]
@@ -267,18 +268,18 @@ class PS2LTBModelReader(object):
         return vertex
 
     def _read_face_vertex(self, f):
-        face_vertex = FaceVertex()
+        face_vertex = abc.FaceVertex()
         face_vertex.texcoord.xy = unpack('2f', f)
         face_vertex.vertex_index = unpack('H', f)[0]
         return face_vertex
 
     def _read_face(self, f):
-        face = Face()
+        face = abc.Face()
         face.vertices = [self._read_face_vertex(f) for _ in range(3)]
         return face
 
     def _read_lod(self, f):
-        lod = LOD()
+        lod = abc.LOD()
         face_count = unpack('I', f)[0]
         lod.faces = [self._read_face(f) for _ in range(face_count)]
         vertex_count = unpack('I', f)[0]
@@ -286,7 +287,7 @@ class PS2LTBModelReader(object):
         return lod
 
     def _read_piece(self, f):
-        piece = Piece()
+        piece = abc.Piece()
         piece.material_index = unpack('H', f)[0]
         piece.specular_power = unpack('f', f)[0]
         piece.specular_scale = unpack('f', f)[0]
@@ -298,7 +299,7 @@ class PS2LTBModelReader(object):
         return piece
 
     def _read_node(self, f):
-        node = Node()
+        node = abc.Node()
         node.name = self._read_string(f)
         node.bind_matrix = self._read_matrix(f)
         f.seek(4, 1) 
@@ -311,7 +312,7 @@ class PS2LTBModelReader(object):
 
     def _read_transform(self, f):
 
-        transform = Animation.Keyframe.Transform()
+        transform = abc.Animation.Keyframe.Transform()
 
         # Unpack and transform the values
         location = unpack('3h', f)
@@ -337,31 +338,31 @@ class PS2LTBModelReader(object):
         return transform
 
     def _read_child_model(self, f):
-        child_model = ChildModel()
+        child_model = abc.ChildModel()
         child_model.name = self._read_string(f)
         child_model.build_number = unpack('I', f)[0]
         child_model.transforms = [self._read_transform(f) for _ in range(self._node_count)]
         return child_model
 
     def _read_keyframe(self, f):
-        keyframe = Animation.Keyframe()
+        keyframe = abc.Animation.Keyframe()
         keyframe.time = unpack('I', f)[0]
         keyframe.string = self._read_string(f)
         return keyframe
 
     def _read_animation(self, f):
-        animation = Animation()
+        animation = abc.Animation()
         animation.name = "Animation_%d" % self._animations_processed
         animation.extents = self._read_vector(f)
 
-        unknown_vector_maybe = self._read_vector(f)
+        _unknown_vector_maybe = self._read_vector(f)
         hashed_string = unpack('I', f)[0]
         animation.interpolation_time = unpack('I', f)[0]
         animation.keyframe_count = unpack('I', f)[0]
         animation.keyframes = [self._read_keyframe(f) for _ in range(animation.keyframe_count)]
         animation.node_keyframe_transforms = []
         for _ in range(self._node_count):
-            start_marker = unpack('I', f)[0]
+            _start_marker = unpack('I', f)[0]
             animation.node_keyframe_transforms.append(
                 [self._read_transform(f) for _ in range(animation.keyframe_count)])
 
@@ -370,7 +371,7 @@ class PS2LTBModelReader(object):
         # Check if we can figure out the hashed string
         looked_up_value = self._hasher.lookup_hash(hashed_string, "animations")
 
-        if (looked_up_value != None):
+        if looked_up_value is not None:
             animation.name = looked_up_value
 
         return animation
@@ -378,7 +379,7 @@ class PS2LTBModelReader(object):
 
     
     def _read_socket(self, f):
-        socket = Socket()
+        socket = abc.Socket()
         # We don't know all the values here, so skip the ones we can't use yet.
         # Refer to the bt file for exact specs
         f.seek(4, 1)
@@ -397,20 +398,20 @@ class PS2LTBModelReader(object):
         # Check if we can figure out the hashed string
         looked_up_value = self._hasher.lookup_hash(hashed_string, "sockets")
 
-        if (looked_up_value != None):
+        if looked_up_value is not None:
             socket.name = looked_up_value
 
         return socket
 
     def _read_anim_binding(self, f):
-        anim_binding = AnimBinding()
+        anim_binding = abc.AnimBinding()
         anim_binding.name = self._read_string(f)
         anim_binding.extents = self._read_vector(f)
         anim_binding.origin = self._read_vector(f)
         return anim_binding
 
     def _read_weight_set(self, f):
-        weight_set = WeightSet()
+        weight_set = abc.WeightSet()
         weight_set.name = self._read_string(f)
         node_count = unpack('I', f)[0]
         weight_set.node_weights = [unpack('f', f)[0] for _ in range(node_count)]
@@ -418,7 +419,7 @@ class PS2LTBModelReader(object):
 
     # Rough WIP
     def from_file(self, path):
-        model = Model()
+        model = abc.Model()
         model.name = os.path.splitext(os.path.basename(path))[0]
 
         with open(path, 'rb') as f:
@@ -445,31 +446,31 @@ class PS2LTBModelReader(object):
             f.seek(12, 1)
 
             # The position for this offset section...
-            offset_offset = unpack('i', f)[0]
-            piece_offset = unpack('i', f)[0]
+            _offset_offset = unpack('i', f)[0]
+            _piece_offset = unpack('i', f)[0]
             node_offset = unpack('i', f)[0]
-            child_model_offset = unpack('i', f)[0]
+            _child_model_offset = unpack('i', f)[0]
             animation_offset = unpack('i', f)[0]
             socket_offset = unpack('i', f)[0]
-            file_size = unpack('i', f)[0]
-            unknown = unpack('i', f)[0]
+            _file_size = unpack('i', f)[0]
+            _unknown = unpack('i', f)[0]
             # End Header
 
             # Model Info
-            keyframe_count = unpack('i', f)[0]
-            animation_count = unpack('i', f)[0]
+            _keyframe_count = unpack('i', f)[0]
+            _animation_count = unpack('i', f)[0]
             self._node_count = unpack('i', f)[0]
             piece_count = unpack('i', f)[0]
-            child_model_count = unpack('i', f)[0]
-            triangle_count = unpack('i', f)[0]
-            vertex_count = unpack('i', f)[0]
-            weight_count = unpack('i', f)[0]
-            lod_count = unpack('i', f)[0]
+            _child_model_count = unpack('i', f)[0]
+            _triangle_count = unpack('i', f)[0]
+            _vertex_count = unpack('i', f)[0]
+            _weight_count = unpack('i', f)[0]
+            _lod_count = unpack('i', f)[0]
             socket_count = unpack('i', f)[0]
-            weight_set_count = unpack('i', f)[0]
-            string_count = unpack('i', f)[0]
-            string_length_count = unpack('i', f)[0]
-            model_info_unknown = unpack('i', f)[0]
+            _weight_set_count = unpack('i', f)[0]
+            _string_count = unpack('i', f)[0]
+            _string_length_count = unpack('i', f)[0]
+            _model_info_unknown = unpack('i', f)[0]
             
             model.command_string = self._read_string(f)
             model.internal_radius = unpack('f', f)[0]
@@ -513,12 +514,12 @@ class PS2LTBModelReader(object):
 
                         # We only want to move up one!
                         f.seek(-4*2, 1)
-                    except struct.error as err:
+                    except struct.error:
                         exit_piece_early = True
                         print("Could not find Vector3 of 0.8f, reached end of file.")
                         break
                         
-                if exit_piece_early == True:
+                if exit_piece_early is True:
                     break
 
                 # Revert back to our original position
@@ -548,7 +549,7 @@ class PS2LTBModelReader(object):
                 # LODs
                 finished_lods = False
     
-                lod = LOD()
+                lod = abc.LOD()
                 vertex_list = VertexList()
                 mesh_set_index = 1 # this gets multiplied
                 mesh_index = 0 # triangle_count + vertex_count
@@ -566,21 +567,21 @@ class PS2LTBModelReader(object):
                 lod_weighted_nodes_count = unpack('i', f)[0]
 
                 # Haven't mapped out pieces yet...
-                piece_object = Piece()
+                piece_object = abc.Piece()
                 piece_object.name = "Piece %d" % piece_index
                 piece_object.material_index = texture_index
 
                 print("Piece %d " % piece_index)
 
                 # For Each lod (Not really implemented like that right now..)
-                while finished_lods == False:
+                while finished_lods is False:
 
                     peek_amount = 0
 
                     # If they reached about 13kb of data
                     # then check ahead to see if they have an unpack VIF command
                     # that *usually* signifies there's more data.
-                    if check_for_more_data == True:
+                    if check_for_more_data is True:
                         print("Checking for more data...")
 
                         # SizeOf(LODGlue)
@@ -594,14 +595,12 @@ class PS2LTBModelReader(object):
                         f.seek(-(peek_amount + 4), 1)
 
                         # If it's not our magic info (Unpack Signal) then there's probably no more data here.
-                        if (vif_cmd.constant is not VIF_DIRECT or vif_cmd.code is not VIF_UNPACK):
+                        if vif_cmd.constant is not VIF_DIRECT or vif_cmd.code is not VIF_UNPACK:
                             print("No more data found!")
-                            finished_lods = True
                             break
                         # End If
 
                         print("Found an additional batch of data!")
-                        check_for_more_data = False
                     # End If
 
                     # LOD Glue 
@@ -627,8 +626,8 @@ class PS2LTBModelReader(object):
                     # 4 Bytes
                     unpack_command.read(f)
 
-                    mesh_set_count = unpack('i', f)[0]
-                    mesh_data_count = unpack('i', f)[0]
+                    _mesh_set_count = unpack('i', f)[0]
+                    _mesh_data_count = unpack('i', f)[0]
 
                     # Skip past two zeros
                     f.seek(4 * 2, 1)
@@ -660,14 +659,14 @@ class PS2LTBModelReader(object):
                         # Skip past 3 unknown floats (they're sometimes not int :thinking:)
                         #print("Three Unknown Ints [%d/%d/%d]" % (unpack('I', f)[0],unpack('I', f)[0],unpack('I', f)[0]))
                         #f.seek(4 * 3, 1)
-                        unknown_val_1 = unpack('I', f)[0]
+                        _unknown_val_1 = unpack('I', f)[0]
                         face_winding_order = unpack('I', f)[0]
-                        unknown_val_2 = unpack('I', f)[0]
+                        _unknown_val_2 = unpack('I', f)[0]
 
 
 
                         # Mesh Set
-                        triangle_counter = 0
+                        _triangle_counter = 0
                         for i in range(data_count):
                             #print("Data i/count", i, data_count)
 
@@ -684,25 +683,25 @@ class PS2LTBModelReader(object):
                                 f.seek(-(4 * 4), 1)
                             # else, we're already here!
 
-                            vertex = Vertex()
+                            vertex = abc.Vertex()
                             
                             # There's no lods, so no need to keep track of this
                             vertex.sublod_vertex_index = 0xCDCD
 
                             vertex_data = self._read_vector(f)
-                            vertex_padding = unpack('f', f)[0]
+                            _vertex_padding = unpack('f', f)[0]
                             normal_data = self._read_vector(f)
-                            normal_padding = unpack('f', f)[0]
+                            _normal_padding = unpack('f', f)[0]
 
                             uv_data = Vector()
                             uv_data.x = unpack('f', f)[0]
                             uv_data.y = unpack('f', f)[0]
 
-                            vertex_index = unpack('f', f)[0]
-                            unknown_padding = unpack('f', f)[0]
+                            _vertex_index = unpack('f', f)[0]
+                            _unknown_padding = unpack('f', f)[0]
 
                             # Create our FaceVert
-                            face_vertex = FaceVertex()
+                            face_vertex = abc.FaceVertex()
                             face_vertex.texcoord = uv_data
                             face_vertex.vertex_index = mesh_index
 
@@ -767,7 +766,6 @@ class PS2LTBModelReader(object):
                         check_for_more_data = True
                     else:
                         print("No more data expected in this batch, size: %d" % size)
-                        finished_lods = True
                         break
                 # End While `finished_lods == False`
 
@@ -870,7 +868,7 @@ class PS2LTBModelReader(object):
                         processed_weights = []
 
                         for j in range( len(normalized_weights) ):
-                            weight = Weight()
+                            weight = abc.Weight()
                             # Set the normalized weight bias
                             weight.bias = normalized_weights[j]
                             weight.node_index = node_indexes[j]
@@ -908,14 +906,14 @@ class PS2LTBModelReader(object):
                 model.pieces.append(piece_object) 
             # End For `piece_index in range( piece_count )`
 
-            print("Final verticies ", len(lod.vertices))
-            print("Final faces ", len(lod.faces))
+                print("Piece verticies ", len(lod.vertices))
+                print("Piece faces ", len(lod.faces))
 
             # Handle Nodes!
             f.seek(node_offset)
 
             model.nodes = [self._read_node(f) for _ in range(self._node_count)]
-            build_undirected_tree(model.nodes)
+            abc.build_undirected_tree(model.nodes)
 
             # Handle Animations!
             f.seek(animation_offset)
