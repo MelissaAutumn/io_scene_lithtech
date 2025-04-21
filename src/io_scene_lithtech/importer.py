@@ -330,15 +330,16 @@ def import_model(model, options):
             for keyframe_index, keyframe in enumerate(animation.keyframes):
                 # Set keyframe time - Scale it down to the default blender animation framerate (25fps)
                 subframe_time = keyframe.time * get_framerate()
-                '''
-                Recursively apply transformations to a nodes children
-                Notes: It carries everything (nodes, pose_bones..) with it, because I expected it to not be a child of this scope...oops!
-                '''
-                def recursively_apply_transform(nodes, node_index, pose_bones, parent_matrix):
-                    # keyframe_index = 0
-                    node = nodes[node_index]
-                    pose_bone = pose_bones[node_index]
-                    original_index = node_index
+
+                # Apply transforms with respect to their parent's transforms
+                transform_stack = [None]
+                current_index = 0
+                while len(transform_stack) > 0:
+                    node_index = current_index
+                    parent_matrix = transform_stack.pop()
+
+                    node = model.nodes[node_index]
+                    pose_bone = armature_object.pose.bones[node_index]
 
                     # Get the current transform
                     transform = animation.node_keyframe_transforms[node_index][keyframe_index]
@@ -356,20 +357,15 @@ def import_model(model, options):
 
                     # If we have a parent, make sure to apply their matrix with ours to get position relative to our parent
                     # otherwise just use our matrix
-                    if parent_matrix != None:
+                    if parent_matrix is not None:
                         matrix = parent_matrix @ matrix
 
                     pose_bone.matrix = matrix
 
                     for _ in range(0, node.child_count):
-                        node_index = node_index + 1
-                        node_index = recursively_apply_transform(nodes, node_index, pose_bones, pose_bone.matrix)
+                        transform_stack.append(pose_bone.matrix)
 
-                    return node_index
-                '''
-                Func End
-                '''
-                recursively_apply_transform(model.nodes, 0, armature_object.pose.bones, None)
+                    current_index += 1
 
                 # For every bone
                 for bone, node in zip(armature_object.pose.bones, model.nodes):
