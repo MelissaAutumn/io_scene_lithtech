@@ -6,3 +6,4 @@ research/test files/*
 *.egg-info
 .venv
 .idea
+*.zip
