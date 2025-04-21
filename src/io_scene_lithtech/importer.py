@@ -369,8 +369,7 @@ def import_model(model, options):
                 '''
                 Func End
                 '''
-                if not (index == 1 and keyframe_index == 0): # this is a dumb hack to preserve the neutral pose
-                    recursively_apply_transform(model.nodes, 0, armature_object.pose.bones, None)
+                recursively_apply_transform(model.nodes, 0, armature_object.pose.bones, None)
 
                 # For every bone
                 for bone, node in zip(armature_object.pose.bones, model.nodes):
@@ -415,16 +414,9 @@ def import_model(model, options):
         if md_actions:
             mesh.shape_keys.animation_data.action = md_actions[0]
 
-    ''' Vertex Animations '''
-    # TODO: move it all out of the animations section
-    #       cleaner than adding more layers of loops
-    #if options.should_import_vertex_animations:
-    #    for animation in model.animations:
-    #        print("Processing vertex animations for ", animation.name)
-
     # Set almost sane defaults
     Context.scene.frame_start = 0
-    #Context.scene.frame_end = ceil(max([animation.keyframes[-1].time * get_framerate() for animation in model.animations]))
+    Context.scene.frame_end = ceil(max([animation.keyframes[-1].time * get_framerate() for animation in model.animations]))
     # Set our keyframe time to 0
     Context.scene.frame_set(0)
     # Set this because almost 100% chance you're importing keyframes that aren't aligned to 25fps
@@ -483,7 +475,7 @@ class ImportOperatorABC(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     should_import_animations: BoolProperty(
         name="Import Animations (Experimental)",
         description="When checked, animations will be imported as actions.",
-        default=False,
+        default=True,
     )
 
     should_import_vertex_animations: BoolProperty(
