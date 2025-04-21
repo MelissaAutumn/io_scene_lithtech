@@ -2,13 +2,13 @@
 
 This addon is forked from [io_scene_abc](https://github.com/cmbasnett/io_scene_abc), renamed to io_scene_lithtech due to the increased scope.
 
-This addon provides limited support for importing and exporting various Lithtech models formats from [various games](https://en.wikipedia.org/wiki/LithTech#Games_using_LithTech) such as [Shogo](https://en.wikipedia.org/wiki/Shogo:_Mobile_Armor_Division), and [No One Lives Forever](https://en.wikipedia.org/wiki/The_Operative:_No_One_Lives_Forever) to and from Blender 2.8x/2.9x.
+This addon provides limited support for importing and exporting various Lithtech models formats from [various games](https://en.wikipedia.org/wiki/LithTech#Games_using_LithTech) such as [Shogo](https://en.wikipedia.org/wiki/Shogo:_Mobile_Armor_Division), and [No One Lives Forever](https://en.wikipedia.org/wiki/The_Operative:_No_One_Lives_Forever) to and from Blender 4.2+
 
 ## How To Install
 
 Download or clone the repository, and zip up the contents of the `src` folder. Go to `Edit -> Preferences` in Blender 2.8x/2.9x, go to the `Add-ons` tab, select `install` and then select the zip file you just created.
 
-To download the respository, click the green `Code -> Download ZIP` at the top of the main page.
+To download the repository, click the green `Code -> Download ZIP` at the top of the main page.
 
 ...or grab a release zip if one is there!
 
@@ -35,7 +35,7 @@ To install for development all you need to do is create a local repository point
 
 The ABC file format description can be found on our wiki [here](https://github.com/cmbasnett/io_scene_abc/wiki/ABC).
 
-Additional format information can be found in [here](https://github.com/haekb/io_scene_lithtech/tree/master/research)
+Additional format information can be found in [here](https://github.com/melissaautumn/io_scene_lithtech/tree/master/research)
 
 ## Known Issues
  - In order to export you must have a mesh, a armature hooked up, and at least one animation action setup
@@ -49,6 +49,7 @@ Additional format information can be found in [here](https://github.com/haekb/io
 ## Credits
 * [**Colin Basnett**](https://github.com/cmbasnett) - Original Creator / Programming
 * [**ReindeerFloatilla**](https://github.com/ReindeerFloatilla) - Research
-* [**Haekb**](https://github.com/haekb) - Current Maintainer / Programming / Research 
+* [**Haekb**](https://github.com/haekb) - Previous Maintainer / Programming / Research
 * [**Amphos**](https://github.com/Five-Damned-Dollarz) - Programming
 * [**Psycrow**](https://github.com/Psycrow101) - Programming
+* [**Melissa Autumn**](https://github.com/melissaautumn) - Current Maintainer / Programming / Research
