@@ -4,11 +4,11 @@ requires-python = ">=3.12"
 
 [[package]]
 name = "fake-bpy-module"
-version = "20250412"
+version = "20250421"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/15/55/a5b608907c5936a1ffb13f6defda0cfd88b70f45adbeb64445782cf6c114/fake_bpy_module-20250412.tar.gz", hash = "sha256:0c48e078ef03ac071142067d3c43f0c4dc462c207854e176de5e9f143d1a10f1", size = 958372 }
+sdist = { url = "https://files.pythonhosted.org/packages/fa/60/0180eb0ca86fcca0fa623e5b670c59c840c369f4540e5e3a9c669f0ea57d/fake_bpy_module-20250421.tar.gz", hash = "sha256:fe4559e8acc5489b9b046b0cc9e3d19901f6b75ce311c4d87b1e6f7db12295cd", size = 959759 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/65/37/568d44c4e7fd3e5dd6f47de175796ea070ea9c03b35160adca43611ef6b9/fake_bpy_module-20250412-py3-none-any.whl", hash = "sha256:4c2c856175493ea029d4d961548598462275e6dfa1c7b57e64c0887360bf50d0", size = 1083154 },
+    { url = "https://files.pythonhosted.org/packages/03/9f/7d834d28870ef958f16e952cb962f64da3c71f7f7d98b8f7fa096ff53345/fake_bpy_module-20250421-py3-none-any.whl", hash = "sha256:2446bc83904281322e977a14995c8a6913c5beca96520f9d1b5f15a619bf83bc", size = 1084751 },
 ]
 
 [[package]]
@@ -22,7 +22,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "fake-bpy-module", specifier = ">=20250409" },
+    { name = "fake-bpy-module", specifier = ">=20250421" },
     { name = "pillow", specifier = ">=11.2.1" },
 ]
 
