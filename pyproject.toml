@@ -1,7 +1,7 @@
 [project]
 name = "io_scene_lithtech"
-version = "0.2.0"
-description = "Add your description here"
+version = "2.0.0"
+description = "Import and export various mesh formats from Lithtech engine games."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
