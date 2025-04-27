@@ -19,6 +19,7 @@ To download the repository, click the green `Code -> Download ZIP` at the top of
 To get started you'll need to install [uv](https://docs.astral.sh/uv). Once installed run `uv sync` to kick-start a 
 local python venv, and download/install the project requirements. 
 
+
 ### Linting
 
 For linting and formatting we use ruff. ruff can be accessed via `uvx ruff check` or `uvx ruff check --fix` to fix any 

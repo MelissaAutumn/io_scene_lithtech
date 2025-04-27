@@ -81,11 +81,6 @@ def setup_debugger():
         return
 
     try:
-        # Set this as your uv's venv's site-packages folder
-        # test if PYDEV_SOURCE_DIR already in sys.path, otherwise append it
-        if sys.path.count(PYDEV_SOURCE_DIR) < 1:
-            sys.path.append(PYDEV_SOURCE_DIR)
-
         # import pydevd module
         import pydevd
 

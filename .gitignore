@@ -10,3 +10,7 @@ research/test files/*
 
 # Personal defines
 local_defines.py
+# We generate this
+blender_manifest.toml
+
+wheels
