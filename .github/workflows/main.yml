@@ -39,10 +39,10 @@ jobs:
         run: uv sync
 
       - name: Generate blender manifest
-        run: uv run make_manifest.py
+        run: uv run ./scripts/make_manifest.py
 
       - name: Generate plugin bundle
-        run: uv run bundle.py
+        run: uv run ./scripts/bundle.py
 
       - name: 'Upload Artifact'
         uses: actions/upload-artifact@v4
