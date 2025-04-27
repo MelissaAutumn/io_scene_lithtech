@@ -9,6 +9,7 @@ PYDEV_HOST = 'localhost'
 PYDEV_PORT = 5678
 
 # In meters
+WORLD_CAMERA_CLIP_START = 1
 WORLD_CAMERA_CLIP_END = 100_000
 
 # Pull a django and try to import a local defines file
