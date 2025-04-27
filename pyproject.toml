@@ -38,3 +38,6 @@ include = ["io_scene_lithtech"]  # package names should match these glob pattern
 [tool.ruff.format]
 quote-style = "single"
 docstring-code-format = true
+
+[tool.blender_manifest]
+blender_min_version = "4.2.0"

@@ -20,6 +20,7 @@ def main(pycharm_debug=False):
 
     project_info = project_manifest.get('project', {})
     project_urls = project_info.get('urls', {})
+    blender_manifest_info = project_manifest.get('tool', {}).get('blender_manifest')
 
     env.globals['addon_id'] = project_info.get('name')
     env.globals['addon_version'] = project_info.get('version')
@@ -34,6 +35,8 @@ def main(pycharm_debug=False):
     env.globals['addon_url'] = project_urls.get(
         'Repository', project_urls.get('Homepage')
     )
+    env.globals['blender_min_version'] = blender_manifest_info.get('blender_min_version')
+
     if pycharm_debug:
         env.globals['pychame_debug'] = True
 
