@@ -4,9 +4,9 @@ import traceback
 from mathutils import Vector, Matrix, Quaternion
 from typing import BinaryIO
 
-from .defines import LOGGER_NAME
-from .io import unpack
-from .models.dat import (
+from ..defines import LOGGER_NAME
+from ..io import unpack
+from ..models.dat import (
     DAT,
     QuadTree,
     WorldModel,
@@ -109,7 +109,7 @@ class DATModelReader:
         data_count = unpack('H', f)[0]
         if data_count == 0xFFFF:
             # Dummy I think
-            unk = unpack('H', f)[0]
+            _unk = unpack('H', f)[0]
         else:
             for _ in range(0, data_count):
                 leaf_data = LeafData()
@@ -120,7 +120,7 @@ class DATModelReader:
 
         polygon_count = unpack('I', f)[0]
         leaf.polygons = list(unpack(f'{polygon_count * 4}B', f))
-        unk2 = unpack('I', f)[0]
+        _unk2 = unpack('I', f)[0]
         return leaf
 
     def _read_plane(self, f: BinaryIO) -> Plane:
@@ -138,9 +138,9 @@ class DATModelReader:
             self._read_vector(f),
         ]
         surface.texture_index = unpack('H', f)[0]
-        unk = unpack('I', f)[0]
+        _unk = unpack('I', f)[0]
         surface.flags = unpack('I', f)[0]
-        unk2 = unpack('I', f)[0]
+        _unk2 = unpack('I', f)[0]
         surface.use_effects = unpack('B', f)[0]
         if surface.use_effects:
             surface.effect = self._read_string(f)
@@ -157,7 +157,7 @@ class DATModelReader:
         # ?
         unk = unpack('H', f)[0]
         if unk > 0:
-            unk_list = unpack(f'{unk * 2}H', f)
+            _unk_list = unpack(f'{unk * 2}H', f)
 
         poly.surface_index = unpack('H', f)[0]
         poly.plane_index = unpack('H', f)[0]
@@ -177,9 +177,9 @@ class DATModelReader:
     def _read_user_portal(self, f: BinaryIO) -> UserPortal:
         user_portal = UserPortal()
         user_portal.name = self._read_string(f)
-        unk = unpack('I', f)[0]
-        unk2 = unpack('I', f)[0]
-        unk3 = unpack('H', f)[0]
+        _unk = unpack('I', f)[0]
+        _unk2 = unpack('I', f)[0]
+        _unk3 = unpack('H', f)[0]
         user_portal.center = self._read_vector(f)
         user_portal.dims = self._read_vector(f)
         return user_portal
