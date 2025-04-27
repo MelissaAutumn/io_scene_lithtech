@@ -6,11 +6,9 @@ This addon provides limited support for importing and exporting various Lithtech
 
 ## How To Install
 
-Download or clone the repository, and zip up the contents of the `src` folder. Go to `Edit -> Preferences` in Blender 2.8x/2.9x, go to the `Add-ons` tab, select `install` and then select the zip file you just created.
+Grab the latest release from the [releases](https://github.com/MelissaAutumn/io_scene_lithtech/releases) section.
 
-To download the repository, click the green `Code -> Download ZIP` at the top of the main page.
-
-...or grab a release zip if one is there!
+Install on Blender 4.2.0 (LTS) or higher.
 
 ## Development
 
@@ -24,6 +22,10 @@ Next generate the blender_manifest.toml with the following command:
 ```shell
 uv run scripts/make_manifest.py
 ```
+
+This step uses information from pyproject.toml to fill in blender_manifest.toml. It also allows us to add any extra 
+wheels (third party libraries) or other settings conditionally. Right now the only extra argument is to add the 
+pycharm debug fork of pydevd for linux x86_64 boxes (aka my machine.)
 
 ### Linting
 
