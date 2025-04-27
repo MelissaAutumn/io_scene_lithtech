@@ -38,7 +38,7 @@ def main(pycharm_debug=False):
     env.globals['blender_min_version'] = blender_manifest_info.get('blender_min_version')
 
     if pycharm_debug:
-        env.globals['pychame_debug'] = True
+        env.globals['pycharm_debug'] = True
 
     manifest = env.get_template('blender_manifest.toml.j2').render()
     with open(f'{base_dir}/blender_manifest.toml', 'w') as fh:
@@ -51,6 +51,6 @@ if __name__ == '__main__':
         description='Generates a blender manifest file based on values from pyproject.toml',
     )
 
-    parser.add_argument('pycharm_debug', action='store_true')
+    parser.add_argument('--pycharm_debug', action='store_true')
     args = parser.parse_args()
     main(args.pycharm_debug)
