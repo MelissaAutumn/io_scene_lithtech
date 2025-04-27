@@ -18,6 +18,14 @@ from .models.dat import (
     LeafData,
     Node,
     UserPortal,
+    WorldObject,
+    WorldPropertyString,
+    WorldPropertyVector,
+    WorldPropertyFloat,
+    WorldPropertyBool,
+    WorldPropertyInt,
+    WorldPropertyRotation,
+    Point,
 )
 
 logger = logging.getLogger(LOGGER_NAME)
@@ -132,7 +140,7 @@ class DATModelReader:
         surface.texture_index = unpack('H', f)[0]
         unk = unpack('I', f)[0]
         surface.flags = unpack('I', f)[0]
-        unk2 = unpack('H', f)[0]
+        unk2 = unpack('I', f)[0]
         surface.use_effects = unpack('B', f)[0]
         if surface.use_effects:
             surface.effect = self._read_string(f)
@@ -176,6 +184,34 @@ class DATModelReader:
         user_portal.dims = self._read_vector(f)
         return user_portal
 
+    def _read_point(self, f: BinaryIO) -> Point:
+        point = Point()
+        point.data = self._read_vector(f)
+        point.normals = self._read_vector(f)
+        return point
+
+    def _read_pblock_table(self, f: BinaryIO):
+        """Read what I assume is a physics block table, we just skip it for now..."""
+        x, y, z = unpack('3I', f)
+        size = x * y * z
+
+        # I assume?
+        _min_box = self._read_vector(f)
+        _max_box = self._read_vector(f)
+
+        data = []
+
+        for _ in range(0, size):
+            pblock_size = unpack('H', f)[0]
+            pblock_unk1 = unpack('H', f)[0]
+            pblock_contents = []
+
+            for _ in range(0, pblock_size):
+                vert_idx = unpack('H', f)[0]
+                quat = unpack('4B', f)
+                pblock_contents.append((vert_idx, quat))
+            data.append((pblock_size, pblock_unk1, pblock_contents))
+
     def _read_world_model(self, f: BinaryIO) -> WorldModel:
         logger.debug(f'Reading world model @ {f.tell()}')
         world_model = WorldModel()
@@ -211,7 +247,8 @@ class DATModelReader:
         assert len(world_model.texture_list) == texture_count
 
         world_model.vertices = [
-            self._read_vertex(f) for _ in range(0, world_model.vertex_count)
+            self._read_vertex(f)
+            for _ in range(0, world_model.poly_count)  # Yes polycount
         ]
         world_model.leafs = [
             self._read_leaf(f) for _ in range(0, world_model.leaf_count)
@@ -222,34 +259,89 @@ class DATModelReader:
         world_model.surfaces = [
             self._read_surface(f) for _ in range(0, world_model.surface_count)
         ]
+        world_model.polies = [
+            self._read_poly(f, world_model.vertices[i])
+            for i in range(0, world_model.poly_count)
+        ]
+
         world_model.nodes = [
             self._read_node(f) for _ in range(0, world_model.node_count)
         ]
         world_model.user_portals = [
             self._read_user_portal(f) for _ in range(0, world_model.user_portal_count)
         ]
-        world_model.polies = [
-            self._read_poly(f, world_model.vertices[i])
-            for i in range(0, world_model.poly_count)
+        world_model.points = [
+            self._read_point(f) for _ in range(0, world_model.point_count)
         ]
+        self._read_pblock_table(f)
 
-        logger.debug(world_model.__dict__)
+        world_model.root_node_index = unpack('I', f)[0]
+        world_model.sections = unpack('I', f)[0]
+
+        # Note: We don't read the terrain vis information (i.e. section)
 
         return world_model
+
+    def _read_world_object(self, f: BinaryIO) -> WorldObject:
+        world_object = WorldObject()
+        _data_len = unpack('H', f)[0]
+        world_object.type = self._read_string(f)
+        world_object.property_count = unpack('I', f)[0]
+        for idx in range(0, world_object.property_count):
+            name = self._read_string(f)
+            code = unpack('b', f)[0]
+            flags = unpack('I', f)[0]
+            _prop_data_len = unpack('H', f)[0]
+
+            match code:
+                case 0:
+                    world_property = WorldPropertyString()
+                case 1 | 2:
+                    world_property = WorldPropertyVector()
+                case 3:
+                    world_property = WorldPropertyFloat()
+                case 5:
+                    world_property = WorldPropertyBool()
+                case 4 | 6:
+                    world_property = WorldPropertyInt()
+                case 7:
+                    world_property = WorldPropertyRotation()
+                case _:
+                    logger.error(f'Unknown world property code: {code}')
+                    raise TypeError()
+
+            world_property.name = name
+            world_property.flags = flags
+            world_property.property_type = code
+            world_property.read_value(f)
+
+            world_object.properties.append(world_property)
+        return world_object
 
     def from_file(self, path: str):
         with open(path, 'rb') as f:
             try:
                 logger.debug('Reading header')
                 model = self._read_header(f)
+
                 logger.debug('Reading quadtree')
                 model.quad_tree = self._read_quadtree(f)
+
                 logger.debug('Reading world models')
                 world_model_count = unpack('I', f)[0]
-                next_world_model_pos = unpack('I', f)[0]
-                _padding = unpack('32B', f)[0]
-                self._read_world_model(f)
-                model.world_objects = []
+                for _ in range(0, world_model_count):
+                    next_world_model_pos = unpack('I', f)[0]
+                    _padding = unpack('32B', f)[0]
+                    model.world_models.append(self._read_world_model(f))
+                    # Skip terrain vis info
+                    f.seek(next_world_model_pos, 0)
+
+                logger.debug('Reading world objects')
+                world_object_count = unpack('I', f)[0]
+                for _ in range(0, world_object_count):
+                    model.world_objects.append(self._read_world_object(f))
+
+                logger.debug('Skipping render data!')
             except Exception as exc:
                 logger.error('EXCEPTION OCCURRED---------------------------')
                 logger.error(f'Error with loading DAT = {path}')
