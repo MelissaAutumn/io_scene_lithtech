@@ -18,6 +18,7 @@ from . import converter
 from .readers import reader_dat_pc
 from .operators import import_operator_dat_pc
 from .importers import importer_dat_pc
+from .models import dat
 from .defines import (
     LOGGER_NAME,
     LOGGER_FORMAT,
@@ -28,6 +29,7 @@ from .defines import (
 
 if 'bpy' in locals():
     import importlib
+    print('>', locals())
 
     if 'hash_ps2' in locals():
         importlib.reload(hash_ps2)
@@ -59,6 +61,8 @@ if 'bpy' in locals():
         importlib.reload(import_operator_dat_pc)
     if 'importer_dat_pc' in locals():
         importlib.reload(importer_dat_pc)
+    if 'dat' in locals():
+        importlib.reload(dat)
 
 from bpy.utils import register_class, unregister_class
 

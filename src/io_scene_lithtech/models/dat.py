@@ -1,4 +1,4 @@
-from typing import BinaryIO, Any
+from typing import BinaryIO, Any, Optional
 
 from mathutils import Vector, Quaternion
 
@@ -6,6 +6,7 @@ from ..io import unpack
 
 
 class DAT:
+    name: str
     version: int
     object_data_pos: int
     render_data_pos: int
@@ -19,6 +20,7 @@ class DAT:
     world_objects: list['WorldObject']
 
     def __init__(self):
+        self.name = ''
         self.version = 0
         self.object_data_pos = -1
         self.render_data_pos = -1
@@ -411,7 +413,24 @@ class WorldObject:
     property_count: int
     properties: list[WorldProperty]
 
+    # Some helpful attributes
+    name: Optional[str]
+    pos: Optional[Vector()]
+    rotation: Optional[Quaternion()]
+
+    name_prop_idx: int
+    pos_prop_idx: int
+    rotation_prop_idx: int
+
     def __init__(self):
         self.type = ''
         self.properties_count = 0
         self.properties = []
+
+        self.name = None
+        self.pos = None
+        self.rotation = None
+
+        self.name_prop_idx = -1
+        self.pos_prop_idx = -1
+        self.rotation_prop_idx = -1

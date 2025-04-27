@@ -315,6 +315,16 @@ class DATModelReader:
             world_property.property_type = code
             world_property.read_value(f)
 
+            if name == 'Name':
+                world_object.name = world_property.value
+                world_object.name_prop_idx = idx
+            if name == 'Pos':
+                world_object.pos = world_property.value
+                world_object.pos_prop_idx = idx
+            if name == 'Rotation':
+                world_object.rotation = world_property.value
+                world_object.rotation_prop_idx = idx
+
             world_object.properties.append(world_property)
         return world_object
 
@@ -323,6 +333,7 @@ class DATModelReader:
             try:
                 logger.debug('Reading header')
                 model = self._read_header(f)
+                model.name = path.split('/')[-1]
 
                 logger.debug('Reading quadtree')
                 model.quad_tree = self._read_quadtree(f)
@@ -348,3 +359,4 @@ class DATModelReader:
                 logger.error(f'at read position: {f.tell()}')
                 logger.debug(traceback.print_tb(exc.__traceback__))
                 logger.error(exc)
+        return model
