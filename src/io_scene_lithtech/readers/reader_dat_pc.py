@@ -26,6 +26,7 @@ from ..models.dat import (
     WorldPropertyInt,
     WorldPropertyRotation,
     Point,
+    DiskVert,
 )
 
 logger = logging.getLogger(LOGGER_NAME)
@@ -163,7 +164,11 @@ class DATModelReader:
         poly.plane_index = unpack('H', f)[0]
 
         for _ in range(0, vertex.count + vertex.extra):
-            poly.disk_vertices.append(unpack('H3B', f))
+            disk_vert = DiskVert()
+            disk_vert.vert_idx = unpack('H', f)[0]
+            disk_vert.vert_colour = unpack('3B', f)
+
+            poly.disk_vertices.append(disk_vert)
 
         return poly
 

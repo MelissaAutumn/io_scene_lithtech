@@ -197,6 +197,13 @@ class Surface:
         """A mirror, plane/portal based reflections"""
         return self.flags & (1 << 23)
 
+class DiskVert:
+    vert_idx: int
+    vert_colour: list[int]
+
+    def __init__(self):
+        self.vert_idx = -1
+        self.vert_colour = []
 
 class Poly:
     center: Vector
@@ -204,7 +211,7 @@ class Poly:
     lightmap_height: int
     surface_index: int
     plane_index: int
-    disk_vertices: list[Any]
+    disk_vertices: list[DiskVert]
 
     def __init__(self):
         self.center = Vector()

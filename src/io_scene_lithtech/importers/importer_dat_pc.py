@@ -85,7 +85,9 @@ def import_model(model: DAT, options: ModelImportOptions):
             tri_fan = []
             for disk in poly.disk_vertices:
                 # TODO: Clean this up
-                vert_idx, _extra, _extra2, _extra3 = disk
+                vert_idx = disk.vert_idx
+                _vert_colour = disk.vert_colour
+
                 point = mdl.points[vert_idx]
                 vert = point.data
                 normal = point.normals
@@ -114,12 +116,8 @@ def import_model(model: DAT, options: ModelImportOptions):
                 try:
                     _bmface = bm.faces.new(face)
                 except ValueError:
-                    """
-                    This face is a duplicate of another face, which is disallowed by Blender.
-                    Mark this face for deletion after iteration.
-                    """
+                    # I don't think this will ever happen, but we should cover it...
                     logger.debug("Ignoring duplicate face")
-                    #duplicate_face_indices.append(face_index)
                     continue
 
         bm.faces.ensure_lookup_table()
