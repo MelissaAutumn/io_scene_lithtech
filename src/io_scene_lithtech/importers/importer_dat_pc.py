@@ -2,7 +2,7 @@ import logging
 
 import bpy
 import bmesh
-from mathutils import Vector, Quaternion
+from mathutils import Vector, Quaternion, Color
 
 from ..defines import WORLD_CAMERA_CLIP_END, LOGGER_NAME, WORLD_CAMERA_CLIP_START
 from ..dtx import DTX
@@ -77,6 +77,47 @@ def import_model(model: DAT, options: ModelImportOptions):
     # Load in the world objects
     for obj in model.world_objects:
         name = obj.name or '__unnamed_prop__'
+
+        if obj.type == 'StaticSunLight':
+            light_data = bpy.data.lights.new(name=f'{name}_sun', type='SUN')
+            light_data.use_shadow = False
+
+            for prop in obj.properties:
+                if prop.name == 'InnerColor':
+                    light_data.color = Color((prop.value.x, prop.value.y, prop.value.z))
+                elif prop.name == 'BrightScale':
+                    # TODO: Figure out scale, blender is in watts this is just scale
+                    light_data.energy = prop.value * 0.01 # FIXME: This is just broken?
+
+            # Create new object, pass the light data
+            light_object = bpy.data.objects.new(name=name, object_data=light_data)
+            light_object.location = Vector((-obj.pos.x, -obj.pos.z, obj.pos.y)) or Vector()
+            light_object.rotation_quaternion = obj.rotation or Quaternion()
+
+            world_objs_collection.objects.link(light_object)
+            continue
+        elif obj.type == 'ObjectLight' or obj.type == 'Light':
+            light_data = bpy.data.lights.new(name=f'{name}_light', type='POINT')
+            light_data.use_shadow = False
+
+            for prop in obj.properties:
+                if prop.name == 'LightRadius':
+                    # TODO: Figure out scale, blender is a fall off while it seems LT is absolute distance
+                    light_data.shadow_soft_size = prop.value
+                elif prop.name == 'LightColor':
+                    light_data.color = Color((prop.value.x, prop.value.y, prop.value.z))
+                elif prop.name == 'BrightScale':
+                    # TODO: Figure out scale, blender is in watts this is just scale
+                    light_data.energy = prop.value * 1000
+
+            # Create new object, pass the light data
+            light_object = bpy.data.objects.new(name=name, object_data=light_data)
+            light_object.location = Vector((-obj.pos.x, -obj.pos.z, obj.pos.y)) or Vector()
+            light_object.rotation_quaternion = obj.rotation or Quaternion()
+
+            world_objs_collection.objects.link(light_object)
+            continue
+
         bl_obj = bpy.data.objects.new(name, object_data=None)
         # Space conversion
         bl_obj.location = Vector((-obj.pos.x, -obj.pos.z, obj.pos.y)) or Vector()
@@ -142,6 +183,7 @@ def import_model(model: DAT, options: ModelImportOptions):
                 bsdf = material.node_tree.nodes["Principled BSDF"]
                 tex_image = material.node_tree.nodes.new('ShaderNodeTexImage')
                 material.node_tree.links.new(bsdf.inputs['Base Color'], tex_image.outputs['Color'])
+                material.specular_intensity = 0.0
 
                 texture = Data.textures.new(texture_key, type='IMAGE')
 

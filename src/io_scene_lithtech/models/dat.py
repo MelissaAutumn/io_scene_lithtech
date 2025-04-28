@@ -340,12 +340,13 @@ class WorldProperty:
     name: str
     property_type: int
     flags: int
+    value: Any
 
     def __init__(self):
         self.name = ''
         self.property_type = 0
         self.flags = 0
-
+        self.value = None
 
 class WorldPropertyString(WorldProperty):
     value: str
