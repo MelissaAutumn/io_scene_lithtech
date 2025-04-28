@@ -87,6 +87,7 @@ class Plane:
 class Surface:
     uv_list: list[Vector]
     texture_index: int
+    plane_index: int  # I think...
     flags: int
     use_effects: bool
     effect: str
@@ -96,6 +97,7 @@ class Surface:
     def __init__(self):
         self.uv_list = [Vector(), Vector(), Vector()]
         self.texture_index = 0
+        self.plane_index = 0
         self.flags = 0
         self.use_effects = False
         self.effect = ''

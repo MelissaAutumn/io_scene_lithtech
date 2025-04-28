@@ -76,7 +76,7 @@ class DTX(object):
             if resource_type != RESOURCE_TYPE_DTX:
                 f.seek(0, 0)
             else:
-                version, self.height, self.width = unpack('i2H', f)
+                version, self.width, self.height = unpack('i2H', f)
             self.mipmap_count, self.section_count, self.flags, self.user_flags = unpack('2H2I', f)
             self.extra_data = unpack('12B', f)
             self.command_string = f.read(DTX_COMMANDSTRING_LENGTH)

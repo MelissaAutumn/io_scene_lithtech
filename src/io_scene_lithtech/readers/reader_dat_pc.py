@@ -133,13 +133,12 @@ class DATModelReader:
     def _read_surface(self, f: BinaryIO) -> Surface:
         surface = Surface()
         # One for each vertex on this surface
-        surface.uv_list = [
-            self._read_vector(f),
-            self._read_vector(f),
-            self._read_vector(f),
-        ]
+        surface.uv_list[0] = self._read_vector(f)
+        surface.uv_list[1] = self._read_vector(f)
+        surface.uv_list[2] = self._read_vector(f)
+
         surface.texture_index = unpack('H', f)[0]
-        _unk = unpack('I', f)[0]
+        surface.plane_index = unpack('I', f)[0]
         surface.flags = unpack('I', f)[0]
         _unk2 = unpack('I', f)[0]
         surface.use_effects = unpack('B', f)[0]
