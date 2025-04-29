@@ -47,40 +47,15 @@ def opq_to_uv(vertex: Vector, o: Vector, p: Vector, q: Vector, tex_width = 128.0
     return Vector((u, v))
 
 
-def import_model(model: DAT, options: ModelImportOptions):
-    if options.should_clear_scene:
-        utils.clear_scene()
-
-    Context = bpy.context
-    Data = bpy.data
-    Ops = bpy.ops
-    Types = bpy.types
-
-    # Create our new collection. This will help us later on..
-    collection = Data.collections.new(model.name)
-    # Add our collection to the scene
-    Context.scene.collection.children.link(collection)
-
-    world_mdls_collection = Data.collections.new("world_models")
-    world_objs_collection = Data.collections.new("world_objects")
-    collection.children.link(world_mdls_collection)
-    collection.children.link(world_objs_collection)
-
-    # Update the viewport's camera clip end so we can see things
-    for a in bpy.context.screen.areas:
-        if a.type == 'VIEW_3D':
-            for s in a.spaces:
-                if s.type == 'VIEW_3D':
-                    s.clip_start = WORLD_CAMERA_CLIP_START
-                    s.clip_end = WORLD_CAMERA_CLIP_END
-
+def _import_world_objects(model: DAT, world_objs_collection):
+    """Reads and creates blender objects (lights or empty so far) per each world object in the world"""
     # Load in the world objects
     for obj in model.world_objects:
         name = obj.name or '__unnamed_prop__'
 
         if obj.type == 'StaticSunLight':
             light_data = bpy.data.lights.new(name=f'{name}_sun', type='SUN')
-            light_data.use_shadow = False
+            light_data.use_shadow = True
 
             for prop in obj.properties:
                 if prop.name == 'InnerColor':
@@ -133,6 +108,35 @@ def import_model(model: DAT, options: ModelImportOptions):
         world_objs_collection.objects.link(bl_obj)
         world_objs_collection.objects.link(font_obj)
 
+def import_model(model: DAT, options: ModelImportOptions):
+    if options.should_clear_scene:
+        utils.clear_scene()
+
+    Context = bpy.context
+    Data = bpy.data
+    Ops = bpy.ops
+    Types = bpy.types
+
+    # Create our new collection. This will help us later on..
+    collection = Data.collections.new(model.name)
+    # Add our collection to the scene
+    Context.scene.collection.children.link(collection)
+
+    world_mdls_collection = Data.collections.new("world_models")
+    world_objs_collection = Data.collections.new("world_objects")
+    collection.children.link(world_mdls_collection)
+    collection.children.link(world_objs_collection)
+
+    # Update the viewport's camera clip end so we can see things
+    for a in bpy.context.screen.areas:
+        if a.type == 'VIEW_3D':
+            for s in a.spaces:
+                if s.type == 'VIEW_3D':
+                    s.clip_start = WORLD_CAMERA_CLIP_START
+                    s.clip_end = WORLD_CAMERA_CLIP_END
+
+    _import_world_objects(model, world_objs_collection)
+
     loaded_textures = {}
     loaded_textures_idx = 0
 
@@ -152,15 +156,20 @@ def import_model(model: DAT, options: ModelImportOptions):
             texture_key = texture_name.upper()
 
             # TODO: This needs to be from a settings list!
-            base_dir = '/home/melissaa/Games/NOLF/out2/'
+            base_dir = '/home/melissaa/Games/NOLF/nolf/'
             # TODO: This needs to go through Path to work on windows too
             file_location = texture_name.upper().replace('\\', '/')
             file_location = f'{base_dir}/{file_location}'
 
-            if texture_key not in loaded_textures:
-                #logger.debug(f"Texture cache miss: {texture_key}")
+            is_texture_loaded = texture_key in loaded_textures
+
+            if is_texture_loaded:
+                image = loaded_textures[texture_key]['image']
+                texture = loaded_textures[texture_key]['tex']
+            else:
                 try:
                     image = DTX(file_location)
+                    texture = None
                 except (IOError, AttributeError):
                     logger.warning(f"Couldn't open {file_location}")
 
@@ -173,41 +182,64 @@ def import_model(model: DAT, options: ModelImportOptions):
 
                     continue
 
-                ''' Create a material for the new piece. '''
-                material = Data.materials.new(texture_key)
-                material.use_nodes = True
-                mesh.materials.append(material)
 
-                ''' Create texture. '''
-                # Swapped over to nodes
-                bsdf = material.node_tree.nodes["Principled BSDF"]
-                tex_image = material.node_tree.nodes.new('ShaderNodeTexImage')
-                material.node_tree.links.new(bsdf.inputs['Base Color'], tex_image.outputs['Color'])
-                material.specular_intensity = 0.0
+            ''' Create a material for the new piece. '''
+            material = Data.materials.new(texture_key)
+            material.use_nodes = True
+            mesh.materials.append(material)
 
+            ''' Create texture. '''
+            # Create a mix node, and mix the texture (slot A/6), and vertex colour (slot B/7)
+            bsdf = material.node_tree.nodes["Principled BSDF"]
+            mix = material.node_tree.nodes.new('ShaderNodeMix')
+            mix.data_type = 'RGBA'
+            tex_image = material.node_tree.nodes.new('ShaderNodeTexImage')
+            vcol = material.node_tree.nodes.new(type='ShaderNodeVertexColor')
+            vcol.layer_name = 'Col'  # the vertex color layer name
+
+            material.node_tree.links.new(
+                tex_image.outputs['Color'], mix.inputs[6]
+            )
+            material.node_tree.links.new(
+                vcol.outputs[0], mix.inputs[7]
+            )
+
+            material.node_tree.links.new(bsdf.inputs['Base Color'], mix.outputs[2])
+
+            material.specular_intensity = 0.0
+
+            # TODO: Bit of a hack
+            if 'SKY.DTX' in texture_key:
+                material.use_transparent_shadow = True
+                material.alpha_threshold = 0
+                bsdf.inputs["Alpha"].default_value = 0.0
+
+            if not texture:
                 texture = Data.textures.new(texture_key, type='IMAGE')
 
                 texture.image = bpy.data.images.new(texture_key, width=image.width, height=image.height, alpha=True, float_buffer=True)
                 texture.image.pixels = [float(p) / 255.0 for p in image.pixels]
 
-                tex_image.image = texture.image
+            tex_image.image = texture.image
 
+            # Save a copy of the loaded image / texture
+            if not is_texture_loaded:
                 loaded_textures[texture_key] = {
                     'idx': loaded_textures_idx,
                     'tex': texture,
                     'image': image,
-                    'material': material
+                    'texture_key': texture_key
                 }
                 loaded_textures_idx += 1
 
+            # Append a local mesh reference
             surface_indices.append(loaded_textures[texture_key])
-
-
 
         bm = bmesh.new()
         bm.from_mesh(mesh)
 
         verts = []
+        colours = []
         normals = []
 
         tri_fans = []
@@ -217,7 +249,7 @@ def import_model(model: DAT, options: ModelImportOptions):
             tri_fan = []
             for disk in poly.disk_vertices:
                 vert_idx = disk.vert_idx
-                _vert_colour = disk.vert_colour
+                vert_colour = disk.vert_colour
 
                 point = mdl.points[vert_idx]
                 vert = point.data
@@ -228,6 +260,12 @@ def import_model(model: DAT, options: ModelImportOptions):
 
                 bm.verts.new(vert)
                 verts.append(point.data)
+
+                if vert_colour[0] > 0 and vert_colour[1] > 0 and vert_colour[2] > 0:
+                    colours.append(Vector((vert_colour[0] / 255.0, vert_colour[1] / 255.0, vert_colour[2] / 255.0, 1.0)))
+                else:
+                    colours.append((0, 0, 0, 0))
+
                 normals.append(normal)
                 tri_fan.append(bm_vert_size)
                 bm_vert_size += 1
@@ -239,12 +277,13 @@ def import_model(model: DAT, options: ModelImportOptions):
         bm.verts.index_update()
 
         # These are triangle fans
+        # FIXME: There seems to be some occasional overdraw, nothing terrible but I don't think this is quite right
         for poly, tri_fan in tri_fans:
             for idx in range(0, len(tri_fan)-2):
                 face = [
-                    bm.verts[tri_fan[0]],
-                    bm.verts[tri_fan[idx + 1]],
                     bm.verts[tri_fan[idx + 2]],
+                    bm.verts[tri_fan[idx + 1]],
+                    bm.verts[tri_fan[0]],
                 ]
 
                 try:
@@ -265,9 +304,12 @@ def import_model(model: DAT, options: ModelImportOptions):
 
                 # add uvs to the new face
                 uv_layer = bm.loops.layers.uv.verify()
+                colour_layer = bm.loops.layers.color.verify()
+                #custom_layer = bm.loops.layers.string.verify()
                 for i, loop in enumerate(bmface.loops):
                     # Need to use the original un-axis converted vert
                     vert = verts[loop.vert.index]
+                    colour = colours[loop.vert.index]
                     uv = opq_to_uv(
                         vert,
                         surface.uv_list[0],
@@ -277,6 +319,7 @@ def import_model(model: DAT, options: ModelImportOptions):
                         tex_info['image'].height
                     )
                     loop[uv_layer].uv = uv
+                    loop[colour_layer] = colour
 
         bm.faces.ensure_lookup_table()
         #mesh.normals_split_custom_set(normals)

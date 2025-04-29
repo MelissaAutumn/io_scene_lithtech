@@ -185,7 +185,8 @@ class DATModelReader:
         _unk2 = unpack('I', f)[0]
         _unk3 = unpack('H', f)[0]
         user_portal.center = self._read_vector(f)
-        user_portal.dims = self._read_vector(f)
+        #user_portal.dims = self._read_vector(f)
+        _unk4 = unpack('2f', f)
         return user_portal
 
     def _read_point(self, f: BinaryIO) -> Point:
