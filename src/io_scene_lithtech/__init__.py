@@ -3,11 +3,14 @@ Init for io_scene_lithtech
 
 The try/except pass allows us to use dtx without needing blender (like with the convert_tex.py script.)
 """
+
 try:
     import logging
     import sys
 
     import bpy
+    from bpy.utils import register_class, unregister_class
+
     from . import hash_ps2
     from . import s3tc
     from . import dtx
@@ -32,6 +35,7 @@ try:
         PYDEV_HOST,
         PYDEV_PORT,
     )
+    from .settings import AddonPrefs, GameData, AddGameDataFolder, RemoveGameDataFolder
 
     if 'bpy' in locals():
         import importlib
@@ -70,7 +74,6 @@ try:
         if 'dat' in locals():
             importlib.reload(dat)
 
-    from bpy.utils import register_class, unregister_class
 
     classes = (
         importer.ImportOperatorABC,
@@ -91,6 +94,8 @@ try:
         formatter = logging.Formatter(LOGGER_FORMAT)
         handler.setFormatter(formatter)
         logger.addHandler(handler)
+
+
 
 
     def setup_debugger():
@@ -128,6 +133,16 @@ try:
             converter.ConvertPS2LTBToLTA.menu_func_import
         )
 
+        bpy.utils.register_class(GameData)
+        bpy.utils.register_class(AddGameDataFolder)
+        bpy.utils.register_class(RemoveGameDataFolder)
+        bpy.utils.register_class(AddonPrefs)
+
+        # If we don't have an entry then add one by default
+        prefs = bpy.context.preferences.addons[__package__].preferences
+        if not prefs.game_data_list:
+            prefs.game_data_list.add()
+
         setup_debugger()
 
 
@@ -151,5 +166,11 @@ try:
         bpy.types.TOPBAR_MT_file_import.remove(
             converter.ConvertPS2LTBToLTA.menu_func_import
         )
-except:  # noqa: E722
-    pass
+
+        bpy.utils.unregister_class(GameData)
+        bpy.utils.unregister_class(AddGameDataFolder)
+        bpy.utils.unregister_class(RemoveGameDataFolder)
+        bpy.utils.unregister_class(AddonPrefs)
+except Exception as e:  # noqa: E722
+    print(f'ERR: {e}')
+    print('^ Ignore if this is running outside of blender!')
