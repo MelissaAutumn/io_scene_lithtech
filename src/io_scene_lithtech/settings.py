@@ -1,6 +1,9 @@
 from bpy.types import Operator, AddonPreferences, PropertyGroup
 from bpy.props import StringProperty, CollectionProperty, BoolProperty
 
+from .utils import get_prefs
+
+
 class GameData(PropertyGroup):
     game_data_folder: StringProperty(
         name='Game Data Folder',
@@ -15,7 +18,7 @@ class AddGameDataFolder(Operator):
     bl_options = {'REGISTER'}
 
     def execute(self, context): # Runs by default
-        prefs = context.preferences.addons[__package__].preferences
+        prefs = get_prefs(context)
         game_data_list = prefs.game_data_list
         game_data_list.add()
 
@@ -27,7 +30,7 @@ class RemoveGameDataFolder(Operator):
     bl_options = {'REGISTER'}
 
     def execute(self, context): # Runs by default
-        prefs = context.preferences.addons[__package__].preferences
+        prefs = get_prefs(context)
         game_data_list = prefs.game_data_list
         for idx, item in enumerate(game_data_list):
             if not item.game_data_folder:

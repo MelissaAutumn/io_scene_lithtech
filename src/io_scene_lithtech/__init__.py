@@ -76,6 +76,10 @@ try:
 
 
     classes = (
+        GameData,
+        AddonPrefs,
+        AddGameDataFolder,
+        RemoveGameDataFolder,
         importer.ImportOperatorABC,
         importer.ImportOperatorLTB,
         import_operator_dat_pc.ImportOperatorDATPC,
@@ -133,11 +137,6 @@ try:
             converter.ConvertPS2LTBToLTA.menu_func_import
         )
 
-        bpy.utils.register_class(GameData)
-        bpy.utils.register_class(AddGameDataFolder)
-        bpy.utils.register_class(RemoveGameDataFolder)
-        bpy.utils.register_class(AddonPrefs)
-
         # If we don't have an entry then add one by default
         prefs = bpy.context.preferences.addons[__package__].preferences
         if not prefs.game_data_list:
@@ -167,10 +166,6 @@ try:
             converter.ConvertPS2LTBToLTA.menu_func_import
         )
 
-        bpy.utils.unregister_class(GameData)
-        bpy.utils.unregister_class(AddGameDataFolder)
-        bpy.utils.unregister_class(RemoveGameDataFolder)
-        bpy.utils.unregister_class(AddonPrefs)
 except Exception as e:  # noqa: E722
     print(f'ERR: {e}')
     print('^ Ignore if this is running outside of blender!')

@@ -1,4 +1,5 @@
 import logging
+import os
 
 import bpy
 import bmesh
@@ -11,6 +12,7 @@ from ..models.dat import DAT
 # Format imports
 
 from .. import utils
+from ..utils import get_prefs
 
 logger = logging.getLogger(LOGGER_NAME)
 
@@ -108,6 +110,24 @@ def _import_world_objects(model: DAT, world_objs_collection):
         world_objs_collection.objects.link(bl_obj)
         world_objs_collection.objects.link(font_obj)
 
+def load_image(context, texture_name: str) -> DTX:
+    game_data_dirs = get_prefs(context).game_data_list
+
+    texture_name_split = texture_name.upper().split('\\')
+
+    for item in game_data_dirs:
+        game_data_dir = item.game_data_folder
+
+        try:
+            image = DTX(os.path.join(game_data_dir, *texture_name_split))
+        except (IOError, AttributeError) as ex:
+            continue
+
+        return image
+
+    raise IOError(f'Could not find {texture_name}')
+
+
 def import_model(model: DAT, options: ModelImportOptions):
     if options.should_clear_scene:
         utils.clear_scene()
@@ -155,12 +175,6 @@ def import_model(model: DAT, options: ModelImportOptions):
 
             texture_key = texture_name.upper()
 
-            # TODO: This needs to be from a settings list!
-            base_dir = '/home/melissaa/Games/NOLF/nolf/'
-            # TODO: This needs to go through Path to work on windows too
-            file_location = texture_name.upper().replace('\\', '/')
-            file_location = f'{base_dir}/{file_location}'
-
             is_texture_loaded = texture_key in loaded_textures
 
             if is_texture_loaded:
@@ -168,10 +182,10 @@ def import_model(model: DAT, options: ModelImportOptions):
                 texture = loaded_textures[texture_key]['tex']
             else:
                 try:
-                    image = DTX(file_location)
+                    image = load_image(Context, texture_name)
                     texture = None
                 except (IOError, AttributeError):
-                    logger.warning(f"Couldn't open {file_location}")
+                    logger.warning(f"Couldn't open {texture_name}")
 
                     # Make sure we still align with texture_index
                     material = Data.materials.new(texture_key)
