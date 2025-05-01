@@ -6,7 +6,7 @@ import bpy
 import bmesh
 from mathutils import Vector, Quaternion, Color
 
-from ..defines import WORLD_CAMERA_CLIP_END, LOGGER_NAME, WORLD_CAMERA_CLIP_START
+from ..defines import LOGGER_NAME
 from ..dtx import DTX
 from ..models.dat import DAT
 
@@ -104,7 +104,11 @@ def _import_world_objects(
 
         bl_obj = bpy.data.objects.new(name, object_data=None)
         # Space conversion
-        bl_obj.location = Vector((-obj.pos.x, -obj.pos.z, obj.pos.y)) or Vector()
+        bl_obj.location = (
+            Vector((-obj.pos.x, -obj.pos.z, obj.pos.y)) * options.scale
+            if obj.pos
+            else Vector()
+        )
         bl_obj.rotation_quaternion = obj.rotation or Quaternion()
         bl_obj.empty_display_type = 'SPHERE'
 
@@ -156,7 +160,7 @@ def import_model(model: DAT, options: ModelImportOptions):
     collection.children.link(world_objs_collection)
 
     # Update the viewport's camera clip end so we can see things
-    #for a in bpy.context.screen.areas:
+    # for a in bpy.context.screen.areas:
     #    if a.type == 'VIEW_3D':
     #        for s in a.spaces:
     #            if s.type == 'VIEW_3D':
