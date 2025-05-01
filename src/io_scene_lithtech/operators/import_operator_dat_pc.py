@@ -3,18 +3,7 @@ from bpy.props import StringProperty
 import bpy_extras
 
 from ..readers.reader_dat_pc import DATModelReader
-from ..importers.importer_dat_pc import import_model
-
-class ModelImportOptions(object):
-    should_merge_duplicate_verts = False
-    should_import_animations = False
-    should_import_sockets = False
-    should_import_lods = False
-    should_merge_pieces = False
-    should_clear_scene = False
-
-    bone_length_min = 0.1
-    image = None
+from ..importers.importer_dat_pc import import_model, ModelImportOptions
 
 class ImportOperatorDATPC(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     """This appears in the tooltip of the operator and in the generated docs"""
