@@ -231,7 +231,18 @@ def import_model(model: DAT, options: ModelImportOptions):
             material.specular_intensity = 0.0
 
             # TODO: Bit of a hack
-            if 'SKY.DTX' in texture_key:
+            if any(
+                tex in texture_key
+                for tex in [
+                    'TEX\\SKY.DTX',
+                    'TEX\\SOUND.DTX',
+                    'TEX\\AI.DTX',
+                    'TEX\\INVISIBLE.DTX',
+                    'TEX\\NOTHING.DTX',
+                    'TEX\\HULLMARKER.DTX',
+                    'TEX\\OCCLUDER.TEX',
+                ]
+            ):
                 material.use_transparent_shadow = True
                 material.alpha_threshold = 0
                 bsdf.inputs['Alpha'].default_value = 0.0
