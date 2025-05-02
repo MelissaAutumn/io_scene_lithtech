@@ -210,6 +210,9 @@ def import_model(model: DAT, options: ModelImportOptions):
             is_texture_loaded = texture_key in loaded_textures
 
             if is_texture_loaded:
+                if loaded_textures[texture_key] is None:
+                    continue
+
                 image = loaded_textures[texture_key]['image']
                 texture = loaded_textures[texture_key]['tex']
             else:
