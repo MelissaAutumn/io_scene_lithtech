@@ -4,7 +4,7 @@ from math import radians
 
 import bpy
 import bmesh
-from mathutils import Vector, Quaternion, Color
+from mathutils import Vector, Quaternion, Color, Euler
 
 from ..defines import LOGGER_NAME
 from ..dtx import DTX
@@ -43,6 +43,7 @@ def _import_world_objects(
     model: DAT, world_objs_collection, options: ModelImportOptions
 ):
     """Reads and creates blender objects (lights or empty so far) per each world object in the world"""
+
     # Load in the world objects
     for obj in model.world_objects:
         name = obj.name or '__unnamed_prop__'
@@ -97,7 +98,12 @@ def _import_world_objects(
                 if obj.pos
                 else Vector()
             )
-            light_object.rotation_quaternion = obj.rotation or Quaternion()
+
+            light_object.rotation_mode = 'XYZ'
+            # Gotta rotate X by -90deg, ya just gotta.
+            rot = Euler(obj.rotation, 'XYZ')
+            rot.rotate(Euler((radians(-90), 0, 0)))
+            light_object.rotation_euler = rot or Euler()
 
             world_objs_collection.objects.link(light_object)
             continue
@@ -109,7 +115,14 @@ def _import_world_objects(
             if obj.pos
             else Vector()
         )
-        bl_obj.rotation_quaternion = obj.rotation or Quaternion()
+        #bl_obj.location = obj.pos * options.scale
+
+        bl_obj.rotation_mode = 'XYZ'
+        # Gotta rotate X by -90deg, ya just gotta.
+        rot = Euler(obj.rotation, 'XYZ')
+        rot.rotate(Euler((radians(-90), 0, 0)))
+        bl_obj.rotation_euler = rot or Euler()
+
         bl_obj.empty_display_type = 'SPHERE'
 
         font_curve = bpy.data.curves.new(type='FONT', name=f'{name}_txt_curve')
@@ -177,7 +190,14 @@ def import_model(model: DAT, options: ModelImportOptions):
         mesh_object = Data.objects.new(mdl.name, mesh)
 
         # Hide the VisBSP mesh object by default
-        if mdl.name == 'VisBSP':
+        # FIXME: Hack for now
+        if (
+            any(
+                mdl.name == obj.name and obj.type in ['AIVolume']
+                for obj in model.world_objects
+            )
+            or mdl.name == 'VisBSP'
+        ):
             mesh_object.hide_viewport = True
 
         # Organizes things in order of appearence
@@ -218,6 +238,7 @@ def import_model(model: DAT, options: ModelImportOptions):
             bsdf = material.node_tree.nodes['Principled BSDF']
             mix = material.node_tree.nodes.new('ShaderNodeMix')
             mix.data_type = 'RGBA'
+            mix.inputs[0].default_value = 0.1  # Factor
             tex_image = material.node_tree.nodes.new('ShaderNodeTexImage')
             vcol = material.node_tree.nodes.new(type='ShaderNodeVertexColor')
             vcol.layer_name = 'Col'  # the vertex color layer name
@@ -296,6 +317,7 @@ def import_model(model: DAT, options: ModelImportOptions):
 
                 # axis conversion
                 vert = Vector((-vert.x, -vert.z, vert.y)) * options.scale
+                #vert = vert * options.scale
 
                 bm.verts.new(vert)
                 verts.append(point.data)

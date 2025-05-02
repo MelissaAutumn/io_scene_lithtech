@@ -1,6 +1,6 @@
 from typing import BinaryIO, Any, Optional
 
-from mathutils import Vector, Quaternion
+from mathutils import Vector, Quaternion, Euler
 
 from ..io import unpack
 
@@ -406,16 +406,17 @@ class WorldPropertyInt(WorldProperty):
 
 
 class WorldPropertyRotation(WorldProperty):
-    value: Quaternion
+    value: Euler
 
     def __init__(self):
         super().__init__()
-        self.value = Quaternion()
+        self.value = Euler()
 
     def read_value(self, f: BinaryIO):
-        # TODO: Move _read_quaternion to a common area and use that
-        x, y, z, w = unpack('4f', f)
-        self.value = Quaternion((w, x, y, z))
+        # This is actually Euler angles with 1 dummy
+        x, y, z, _ = unpack('4f', f)
+        assert _ == 0.0
+        self.value = Euler((x, y, z), 'XYZ')
 
 
 class WorldObject:
