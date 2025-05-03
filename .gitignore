@@ -7,3 +7,10 @@ research/test files/*
 .venv
 .idea
 *.zip
+
+# Personal defines
+local_defines.py
+# We generate this
+blender_manifest.toml
+
+wheels

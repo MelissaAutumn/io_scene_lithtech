@@ -6,8 +6,26 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "fake-bpy-module>=20250421",
+    "jinja2>=3.1.6",
     "pillow>=11.2.1",
+    "pydevd-pycharm~=251.23774.444",
 ]
+authors = [
+  {name = "Colin Basnett"},
+  {name = "ReindeerFloatilla"},
+  {name = "Haekb"},
+  {name = "Amphos"},
+  {name = "Psycrow"},
+  {name = "Melissa Autumn"},
+]
+maintainers = [
+  {name = "Melissa Autumn"}
+]
+license = "GPL-2.0"
+
+[project.urls]
+Repository = "https://github.com/MelissaAutumn/io_scene_lithtech"
+Issues = "https://github.com/MelissaAutumn/io_scene_lithtech/issues"
 
 [build-system]
 requires = ["setuptools>=61.0"]
@@ -16,3 +34,10 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["io_scene_lithtech"]  # package names should match these glob patterns (["*"] by default)
+
+[tool.ruff.format]
+quote-style = "single"
+docstring-code-format = true
+
+[tool.blender_manifest]
+blender_min_version = "4.2.0"

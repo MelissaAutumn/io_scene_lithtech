@@ -104,3 +104,6 @@ def clear_scene():
     scene = bpy.context.scene
     for c in scene.collection.children:
         scene.collection.children.unlink(c)
+
+def get_prefs(context):
+    return context.preferences.addons[__package__].preferences

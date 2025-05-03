@@ -1,6 +1,11 @@
+import os
 from glob import glob
 from zipfile import ZipFile
 import tomllib
+
+if os.getcwd().endswith('scripts'):
+    print('Error: Please run from io_scene_lithtech')
+    exit(1)
 
 
 def main():
@@ -19,9 +24,14 @@ def main():
         for file in glob(f'{base_dir}/**'):
             if '__pycache__' in file:
                 continue
+
+            # Ignore our local defines
+            if file.endswith('local_defines.py'):
+                continue
+
             out_file = file.replace(f'{base_dir}/', '')
             extZip.write(file, f'io_scene_lithtech/{out_file}')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
