@@ -66,6 +66,19 @@ class DATModelReader:
         dat.lightmap_grid_size = unpack('f', f)[0]
         dat.boundary_min = self._read_vector(f)
         dat.boundary_max = self._read_vector(f)
+
+        # Handle world info string
+        props = dat.world_info_string.split(';')
+        for prop in props:
+            # World info strings are seemingly just key values split by the first space.
+            kv: list = prop.split(' ', 1)
+            if len(kv) == 0:
+                # Well this is weird
+                continue
+            if len(kv) == 1:
+                kv.append(True)
+            dat.world_info[kv[0].lower()] = kv[1]
+
         return dat
 
     def _read_quadtree(self, f: BinaryIO) -> QuadTree:

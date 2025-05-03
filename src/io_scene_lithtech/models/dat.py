@@ -11,6 +11,7 @@ class DAT:
     object_data_pos: int
     render_data_pos: int
     world_info_string: str
+    world_info: dict
     lightmap_grid_size: int
     boundary_min: Vector
     boundary_max: Vector
@@ -25,6 +26,7 @@ class DAT:
         self.object_data_pos = -1
         self.render_data_pos = -1
         self.world_info_string = ''
+        self.world_info = {}
         self.lightmap_grid_size = 20
         self.boundary_min = Vector()
         self.boundary_max = Vector()

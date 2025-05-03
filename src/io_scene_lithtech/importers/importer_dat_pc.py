@@ -177,6 +177,16 @@ def import_model(model: DAT, options: ModelImportOptions):
     collection.children.link(world_mdls_collection)
     collection.children.link(world_objs_collection)
 
+    # Handle ambient light here
+    ambient_light = model.world_info.get('ambientlight')
+    if ambient_light and options.import_lights:
+        # Ambient light contains 3 values separated by spaces
+        r, g, b = ambient_light.split(' ')
+        r = float(r) / 255.0
+        g = float(g) / 255.0
+        b = float(b) / 255.0
+        bpy.data.worlds["World"].node_tree.nodes["Background"].inputs[0].default_value = [r, g, b, 1.0]
+
     _import_world_objects(model, world_objs_collection, options)
 
     loaded_textures = {}
