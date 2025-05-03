@@ -4,7 +4,7 @@ from math import radians
 
 import bpy
 import bmesh
-from mathutils import Vector, Quaternion, Color, Euler
+from mathutils import Vector, Color, Euler
 
 from ..defines import LOGGER_NAME
 from ..dtx import DTX
@@ -19,7 +19,11 @@ logger = logging.getLogger(LOGGER_NAME)
 
 
 class ModelImportOptions(object):
-    should_clear_scene = True
+    clear_scene = True
+    import_lights = True
+    import_entities = True
+    import_geometry = True
+    hide_vis_by_default = True
 
     scale = 0.015625  # 64 units = 1 meter (it works out well enough)
     light_scale = 1.0
@@ -53,7 +57,7 @@ def _import_world_objects(
             or obj.type == 'ObjectLight'
             or obj.type == 'DirLight'
             or obj.type == 'Light'
-        ):
+        ) and options.import_lights:
             is_sun = obj.type == 'StaticSunLight'
             is_point = obj.type == 'ObjectLight' or obj.type == 'Light'
             is_spot = obj.type == 'DirLight'
@@ -108,31 +112,32 @@ def _import_world_objects(
             world_objs_collection.objects.link(light_object)
             continue
 
-        bl_obj = bpy.data.objects.new(name, object_data=None)
-        # Space conversion
-        bl_obj.location = (
-            Vector((-obj.pos.x, -obj.pos.z, obj.pos.y)) * options.scale
-            if obj.pos
-            else Vector()
-        )
-        #bl_obj.location = obj.pos * options.scale
+        if options.import_entities:
+            bl_obj = bpy.data.objects.new(name, object_data=None)
+            # Space conversion
+            bl_obj.location = (
+                Vector((-obj.pos.x, -obj.pos.z, obj.pos.y)) * options.scale
+                if obj.pos
+                else Vector()
+            )
+            # bl_obj.location = obj.pos * options.scale
 
-        bl_obj.rotation_mode = 'XYZ'
-        # Gotta rotate X by -90deg, ya just gotta.
-        rot = Euler(obj.rotation, 'XYZ')
-        rot.rotate(Euler((radians(-90), 0, 0)))
-        bl_obj.rotation_euler = rot or Euler()
+            bl_obj.rotation_mode = 'XYZ'
+            # Gotta rotate X by -90deg, ya just gotta.
+            rot = Euler(obj.rotation, 'XYZ')
+            rot.rotate(Euler((radians(-90), 0, 0)))
+            bl_obj.rotation_euler = rot or Euler()
 
-        bl_obj.empty_display_type = 'SPHERE'
+            bl_obj.empty_display_type = 'SPHERE'
 
-        font_curve = bpy.data.curves.new(type='FONT', name=f'{name}_txt_curve')
-        font_curve.body = name
-        font_curve.align_x = 'CENTER'
-        font_obj = bpy.data.objects.new(name=f'{name}_txt', object_data=font_curve)
-        font_obj.parent = bl_obj
+            font_curve = bpy.data.curves.new(type='FONT', name=f'{name}_txt_curve')
+            font_curve.body = name
+            font_curve.align_x = 'CENTER'
+            font_obj = bpy.data.objects.new(name=f'{name}_txt', object_data=font_curve)
+            font_obj.parent = bl_obj
 
-        world_objs_collection.objects.link(bl_obj)
-        world_objs_collection.objects.link(font_obj)
+            world_objs_collection.objects.link(bl_obj)
+            world_objs_collection.objects.link(font_obj)
 
 
 def load_image(context, texture_name: str) -> DTX:
@@ -154,7 +159,7 @@ def load_image(context, texture_name: str) -> DTX:
 
 
 def import_model(model: DAT, options: ModelImportOptions):
-    if options.should_clear_scene:
+    if options.clear_scene:
         utils.clear_scene()
 
     Context = bpy.context
@@ -172,18 +177,13 @@ def import_model(model: DAT, options: ModelImportOptions):
     collection.children.link(world_mdls_collection)
     collection.children.link(world_objs_collection)
 
-    # Update the viewport's camera clip end so we can see things
-    # for a in bpy.context.screen.areas:
-    #    if a.type == 'VIEW_3D':
-    #        for s in a.spaces:
-    #            if s.type == 'VIEW_3D':
-    #                s.clip_start = WORLD_CAMERA_CLIP_START
-    #                s.clip_end = WORLD_CAMERA_CLIP_END
-
     _import_world_objects(model, world_objs_collection, options)
 
     loaded_textures = {}
     loaded_textures_idx = 0
+
+    if not options.import_geometry:
+        return {'FINISHED'}
 
     for mdl in model.world_models:
         mesh = Data.meshes.new(mdl.name)
@@ -196,7 +196,7 @@ def import_model(model: DAT, options: ModelImportOptions):
                 mdl.name == obj.name and obj.type in ['AIVolume']
                 for obj in model.world_objects
             )
-            or mdl.name == 'VisBSP'
+            or (mdl.name == 'VisBSP' and options.hide_vis_by_default)
         ):
             mesh_object.hide_viewport = True
 
@@ -320,7 +320,7 @@ def import_model(model: DAT, options: ModelImportOptions):
 
                 # axis conversion
                 vert = Vector((-vert.x, -vert.z, vert.y)) * options.scale
-                #vert = vert * options.scale
+                # vert = vert * options.scale
 
                 bm.verts.new(vert)
                 verts.append(point.data)
